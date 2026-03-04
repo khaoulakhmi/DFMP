@@ -63,6 +63,13 @@ const config = defineConfig({
                 lg: { value: "0 10px 15px rgba(0,0,0,0.1)" },
             },
         },
+        keyframes: {
+            shake: {
+            "0%, 100%": { transform: "translateX(0)" },
+            "25%": { transform: "translateX(-4px)" },
+            "75%": { transform: "translateX(4px)" },
+            },
+        },
     
     // Semantic tokens allow us to define tokens that can adapt based on the color mode (light/dark) or other conditions. This is useful for defining colors that should change based on the theme.
         semanticTokens: {
