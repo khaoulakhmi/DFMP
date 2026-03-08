@@ -39,11 +39,11 @@ Tasks:
 
 -   [x] Initialize Vite + React + TypeScript
 -   [x] Install dependencies
--   [ ] Configure TypeScript strict mode
--   [ ] Setup ESLint
--   [ ] Setup Prettier
--   [ ] Setup path aliases (`@/`)
--   [ ] Setup environment variables
+-   [x] Configure TypeScript strict mode
+-   [x] Setup ESLint
+-   [x] Setup Prettier
+-   [x] Setup path aliases (`@/`)
+-   [x] Setup environment variables
 
 Dependencies:
 
