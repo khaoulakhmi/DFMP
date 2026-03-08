@@ -43,7 +43,7 @@ Tasks:
 -   [x] Setup ESLint
 -   [x] Setup Prettier
 -   [x] Setup path aliases (`@/`)
--   [x] Setup environment variables
+-   [ ] Setup environment variables
 
 Dependencies:
 
