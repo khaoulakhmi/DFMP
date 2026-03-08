@@ -13,7 +13,7 @@ export const inputRecipe = defineRecipe({
       color: "text.secondary",
     },
 
-    _focusVisible: {
+    _focusWithin: {
       outline: "none",
       borderColor: "primary.500",
        boxShadow: "0 0 0 2px var(--chakra-colors-primary-200)",
@@ -50,11 +50,22 @@ export const inputRecipe = defineRecipe({
         borderBottomColor: "border.default",
         bg: "transparent",
 
-        _focusVisible: {
+        _focusWithin: {
           borderBottomColor: "primary.500",
           boxShadow: "0 2px 0 0 var(--chakra-colors-primary-500)",
         },
       },
+       subtle: {
+      bg: "transparent",
+      borderColor: "transparent",
+      _hover: {
+        bg: "neutral.100",
+      },
+      _focusWithin: {
+        bg: "neutral.100",
+        borderColor: "primary.400",
+      },
+    },
     },
 
     state: {
@@ -65,7 +76,7 @@ export const inputRecipe = defineRecipe({
         boxShadow: "0 0 0 1px var(--chakra-colors-error-500)",
         animation: "shake 0.25s ease-in-out",
 
-        _focusVisible: {
+        _focusWithin: {
           borderColor: "error.500",
           boxShadow: "0 0 0 2px var(--chakra-colors-error-200)",
         },
