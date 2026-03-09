@@ -4,7 +4,7 @@ import {
   type RecipeVariantProps,
   
 } from "@chakra-ui/react"
-import { inputRecipe } from "../../theme/recipes/input.recipe"
+import { inputRecipe } from "@/shared/theme/recipes/input.recipe"
 import type { ReactNode } from "react"
 
 const InputRoot = chakra("div", inputRecipe)
