@@ -1,6 +1,7 @@
 import {
   RadioGroup, HStack
 } from '@chakra-ui/react'
+import Typography from './typography';
 
 
 interface RadioProps extends Omit<RadioGroup.RootProps, 'variant'> {
@@ -177,7 +178,11 @@ const getVariantStyles = (variant: RadioProps['variant']) => {
           <RadioGroup.Item key={item.value} value={item.value}>
             <RadioGroup.ItemHiddenInput />
             <RadioGroup.ItemIndicator {...getVariantStyles(variant)}/>
-            <RadioGroup.ItemText>{item.label}</RadioGroup.ItemText>
+            <RadioGroup.ItemText>
+              <Typography variant="body-sm" color="neutral.700">
+                {item.label}
+              </Typography>
+            </RadioGroup.ItemText>
           </RadioGroup.Item>
         ))}
       </HStack>
