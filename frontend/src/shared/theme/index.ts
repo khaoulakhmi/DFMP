@@ -1,9 +1,11 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 import { colors } from "./colors";
-import { buttonRecipe } from "./recipes/button.recipe";
-import { inputRecipe } from "./recipes/input.recipe";
+import { buttonRecipe } from "@/shared/theme/recipes/button.recipe";
+import { inputRecipe } from "@/shared/theme/recipes/input.recipe";
 import { typography } from "./typography";
 import { spacing } from "./spacing";
+import { checkboxRecipe } from "@/shared/theme/recipes/checkbox.recipe";
+import { typographyRecipe } from "./recipes/typography.recipe";
 
 
 const config = defineConfig({
@@ -82,6 +84,10 @@ const config = defineConfig({
         recipes: {
             button: buttonRecipe,
             input: inputRecipe,
+            typography: typographyRecipe,
+        },
+        slotRecipes: {
+            checkbox: checkboxRecipe,
         }
     },
   globalCss: {
