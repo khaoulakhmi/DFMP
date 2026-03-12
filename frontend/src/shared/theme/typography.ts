@@ -1,7 +1,17 @@
+import "@fontsource/inter/400.css"
+import "@fontsource/inter/500.css"
+import "@fontsource/inter/600.css"
+import "@fontsource/inter/700.css"
+
+import "@fontsource/noto-sans-arabic/400.css"
+import "@fontsource/noto-sans-arabic/500.css"
+import "@fontsource/noto-sans-arabic/600.css"
+import "@fontsource/noto-sans-arabic/700.css"
+
 export const typography = {
     fonts: {
-        heading: { value: "'Inter', sans-serif" },
-        body: { value: "'Inter', sans-serif" },
+        heading: { value: "'Noto Sans Arabic', 'Inter', sans-serif" },
+        body: { value: "'Noto Sans Arabic','Inter', sans-serif" },
     },
     fontSizes: {
         xs: { value: "12px" },
