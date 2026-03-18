@@ -6,9 +6,10 @@ export const buttonRecipe = defineRecipe({
     borderRadius: "md",
     transition: "all 0.2s ease",
     cursor: "pointer",
+    width: "full",
     _disabled: {
       opacity: 0.6,
-      cursor: "not-allowed",
+      cursor: "not-allowed", 
     },
   },
 
@@ -24,7 +25,7 @@ export const buttonRecipe = defineRecipe({
 
       secondary: {
         bg: "neutral.100",
-        color: "text.primary",
+        color: "primary.600",
         _hover: {
           bg: "neutral.200",
         },
