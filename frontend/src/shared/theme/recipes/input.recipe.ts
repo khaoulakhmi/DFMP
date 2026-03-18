@@ -238,6 +238,7 @@ export const inputRecipe = defineRecipe({
         
         _placeholder: {
           color: "success.400",
+          fontSize: "sm",
         },
       },
       

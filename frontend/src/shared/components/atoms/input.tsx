@@ -16,7 +16,11 @@ const InputField = chakra("input", {
     border: "none",
     outline: "none",
     _focus: { outline: "none" },
-    _placeholder: { color: "text.secondary" },
+    _placeholder: { 
+      color: "text.secondary",
+      opacity: 0.8,
+      fontSize: "xs",
+     },
   },
 })
 
