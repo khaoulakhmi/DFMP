@@ -47,6 +47,13 @@ export const colors = {
     900: { value :"#4d2417"},
   },
 
+  text: {
+    primary: { value :"#1f2f34"},
+    secondary: { value :"#3a5258"},
+    disabled: { value :"#7d949d"},
+    lighting: { value :"#c1d4d9"},
+  },
+
   success: {
     50: { value :"#e8f5ef"},
     100: { value :"#c6e7d8"},
