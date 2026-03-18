@@ -18,6 +18,11 @@ const SelectField = chakra("select", {
     outline: "none",
     cursor: "pointer",
     _focus: { outline: "none" },
+    _placeholder: {
+      color: "text.secondary",
+      opacity: 0.8,
+      fontSize: "sm",
+     },
   },
 })
 
