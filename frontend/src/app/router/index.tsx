@@ -6,13 +6,13 @@ import DashboardLayout from "@/layouts/DashboardLayout"
 
 // pages
 import AuthPage from "@/features/auth"
-// import Dashboard from "@/features/dashboard"
+import Dashboard from "@/features/dashboard"
 // import Reports from "@/features/reports"
 // import Settings from "@/features/settings"
 
 // guards
 import AuthGuard from "@/app/guards/AuthGuard"
-import RoleGuard from "@/app/guards/roleGuard"
+import RoleGuard from "@/app/guards/RoleGuard"
 
 // fake state (later replace with store)
 const isAuthenticated = true
@@ -38,10 +38,10 @@ export const router = createBrowserRouter([
       {
         element: <DashboardLayout />,
         children: [
-        //   {
-        //     path: "/",
-        //     element: <Dashboard />,
-        //   },
+          {
+            path: "/",
+            element: <Dashboard />,
+          },
 
         //   {
         //     path: "/reports",
