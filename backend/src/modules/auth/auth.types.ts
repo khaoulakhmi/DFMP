@@ -17,3 +17,13 @@ export interface AuthTokens {
     accessToken: string
     refreshToken: string
 }
+
+export interface LoginResponse {
+    user: {
+        id: string
+        username: string
+        name: string
+        role: string
+    }
+    tokens: AuthTokens
+}
