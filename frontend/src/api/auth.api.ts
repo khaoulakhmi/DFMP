@@ -5,8 +5,8 @@ export const authApi = {
     login: async (username: string, password: string) => {
         const { data } = await api.post('/auth/login', { username, password })
         // save tokens
-        localStorage.setItem('accessToken', data.accessToken)
-        localStorage.setItem('refreshToken', data.refreshToken)
+        localStorage.setItem('accessToken', data.tokens.accessToken)
+        localStorage.setItem('refreshToken', data.tokens.refreshToken)
         return data
     },
 
