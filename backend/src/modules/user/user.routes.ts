@@ -8,10 +8,10 @@ import { Role } from "../../generated/prisma/enums";
 const userRouter = Router();
 
 userRouter.get("/", authenticate, authorize(Role.ADMIN), UserController.getAllUsers);
-userRouter.get("/:username", UserController.getUserByUsername);
-userRouter.get("/id/:id", UserController.getUserById);
-userRouter.post("/", UserController.createUser);
-userRouter.put("/:id", UserController.updateUser);
-userRouter.delete("/:id", UserController.deleteUser);
+userRouter.get("/username/:username", authenticate, UserController.getUserByUsername);
+userRouter.get("/:id", authenticate, UserController.getUserById);
+userRouter.post("/", authenticate, UserController.createUser);
+userRouter.put("/:id", authenticate, UserController.updateUser);
+userRouter.delete("/:id", authenticate, UserController.deleteUser);
 
 export default userRouter;
