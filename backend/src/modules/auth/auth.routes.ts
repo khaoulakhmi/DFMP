@@ -9,6 +9,6 @@ const authRouter = Router()
 authRouter.post('/login',          validate(loginSchema),        AuthController.login)
 authRouter.post('/logout',         validate(refreshTokenSchema), AuthController.logout)
 authRouter.post('/refresh',        validate(refreshTokenSchema), AuthController.refresh)
-authRouter.post('/reset-password', authenticate,                 validate(resetPasswordSchema), AuthController.resetPassword)
+authRouter.post('/reset-password', authenticate, validate(resetPasswordSchema), AuthController.resetPassword)
 
 export default authRouter
