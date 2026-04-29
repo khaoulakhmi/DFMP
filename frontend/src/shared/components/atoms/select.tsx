@@ -28,7 +28,7 @@ const SelectField = chakra("select", {
 
 type SelectVariants = RecipeVariantProps<typeof selectRecipe>
 
-interface SelectProps
+export interface SelectProps
   extends HTMLChakraProps<"select">,
     SelectVariants {
   leftIcon?: ReactNode
