@@ -1,49 +1,61 @@
-import { Box, Flex, Heading, Text } from "@chakra-ui/react"
-import Button from "@/shared/components/atoms/button"
-import { useNavigate } from "react-router-dom"
+import { Box } from "@chakra-ui/react"
 import UsersList from "@/features/users/components/UsersList"
+import Tabs from "@/shared/components/molecules/tabs"
+import { FaUsers } from "react-icons/fa";
+import { IoMdPersonAdd } from "react-icons/io";
+import CreateUserPage from "./components/createUserPage";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
 
 const UsersPage = () => {
-    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [listVersion, setListVersion] = useState(0)
+    const activeTab = searchParams.get("tab") === "create" ? "create" : "all"
+
+    const showUsersList = () => {
+        setSearchParams({})
+    }
+
+    const options = [
+        {
+            icon: <FaUsers />,
+            label: "All Users",
+            value: "all",
+            content: <UsersList key={listVersion} />
+        },
+        {
+            icon: <IoMdPersonAdd />,
+            label: "Create New User",
+            value: "create",
+            content: (
+                <CreateUserPage
+                    showHeader={false}
+                    onCancel={showUsersList}
+                    onSuccess={() => {
+                        setListVersion((version) => version + 1)
+                        showUsersList()
+                    }}
+                />
+            )
+        }
+    ]
 
     return (
-        <Box p={6}>
+        <Box p={4}>
+            <Tabs
+                options={options}
+                value={activeTab}
+                variant="underline"
+                onValueChange={(details) => {
+                    if (details.value === "create") {
+                        setSearchParams({ tab: "create" })
+                        return
+                    }
 
-            {/* Page Header */}
-            <Flex
-                justify="space-between"
-                align="center"
-                mb={6}
-            >
-                <Box>
-                    <Heading
-                        fontSize="2xl"
-                        fontWeight="semibold"
-                        color="neutral.900"
-                        fontFamily="heading"
-                    >
-                        Users
-                    </Heading>
-                    <Text fontSize="sm" color="neutral.600" mt={1}>
-                        Manage system users and their roles
-                    </Text>
-                </Box>
-
-                {/* Create User Button */}
-                <Box w="36">
-                    <Button
-                        variant="primary"
-                        size="md"
-                        onClick={() => navigate("/users/create")}
-                    >
-                        + Create User
-                    </Button>
-                </Box>
-            </Flex>
-
-            {/* Users List */}
-            <UsersList />
-
+                    showUsersList()
+                }}
+            />
         </Box>
     )
 }

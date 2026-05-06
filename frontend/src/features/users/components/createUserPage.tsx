@@ -4,12 +4,22 @@ import Typography from "@/shared/components/atoms/typography"
 import SelectField from "@/shared/components/molecules/Forms/selectField"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import type { CreateUserDTO } from "@/shared/types/user.type"
-import { Box, VStack, Text, SimpleGrid, Flex } from "@chakra-ui/react"
+import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { toaster } from "@/components/ui/toaster"
 
-const CreateUserPage = () => {
+interface CreateUserPageProps {
+    onCancel?: () => void;
+    onSuccess?: () => void;
+    showHeader?: boolean;
+}
+
+const CreateUserPage = ({
+    onCancel,
+    onSuccess,
+    showHeader = true,
+}: CreateUserPageProps) => {
     const {
         register,
         handleSubmit,
@@ -17,46 +27,59 @@ const CreateUserPage = () => {
     } = useForm<CreateUserDTO>()
 
     const navigate = useNavigate()
+
+    const handleCancel = () => {
+        if (onCancel) {
+            onCancel()
+            return
+        }
+
+        navigate("/users")
+    }
+
     const onSubmit = async (data: CreateUserDTO) => {
         const user = await userApi.create(data)
 
-        if (user) {
+        if (!user) return
+
         toaster.create({
             title: "User created",
             description: `${user.name} has been created successfully.`,
             type: "success",
         })
-        navigate("/users") 
-    }
+
+        if (onSuccess) {
+            onSuccess()
+            return
+        }
+
+        navigate("/users")
     }
 
     return (
         <Box>
-            {/* Page Header */}
-            <Flex justify="space-between" align="center" mb={6}>
-                <Box w="10" h="10">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => navigate("/users")}
-                    >
-                        ←
-                    </Button>
-                </Box>
-                <Box mb={6}>
-                    <Typography
-                        variant={"heading"}
-                    >
-                        Create User
-                    </Typography>
-                    <Typography variant={"body-sm"} color="text.secondary">
-                        Add a new user to the system
-                    </Typography>
-                </Box>              
-            </Flex>
-           
+            {showHeader && (
+                <Flex justify="space-between" align="center" mb={6}>
+                    <Box w="20">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleCancel}
+                        >
+                            Back
+                        </Button>
+                    </Box>
+                    <Box mb={6}>
+                        <Typography variant="heading">
+                            Create User
+                        </Typography>
+                        <Typography variant="body-sm" color="text.secondary">
+                            Add a new user to the system
+                        </Typography>
+                    </Box>
+                </Flex>
+            )}
 
-            {/* Form Card */}
             <Box
                 as="form"
                 bg="white"
@@ -65,10 +88,8 @@ const CreateUserPage = () => {
                 border="1px solid"
                 borderColor="neutral.200"
                 overflow="hidden"
-                // maxW="700px"
                 onSubmit={handleSubmit(onSubmit)}
             >
-                {/* Card Header */}
                 <Box
                     px={8}
                     py={5}
@@ -85,12 +106,9 @@ const CreateUserPage = () => {
                     </Text>
                 </Box>
 
-                {/* Card Body */}
                 <Box px={8} py={6}>
                     <VStack gap={5} align="stretch">
-
-                        {/* Name + Username side by side */}
-                        <SimpleGrid columns={2} gap={4}>
+                        <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                             <TextField
                                 label="Full Name"
                                 placeholder="Enter full name"
@@ -109,7 +127,6 @@ const CreateUserPage = () => {
                             />
                         </SimpleGrid>
 
-                        {/* Password */}
                         <TextField
                             label="Password"
                             placeholder="Min. 6 characters"
@@ -124,7 +141,6 @@ const CreateUserPage = () => {
                             })}
                         />
 
-                        {/* Role */}
                         <SelectField
                             label="Role"
                             leftIcon={null}
@@ -138,11 +154,9 @@ const CreateUserPage = () => {
                             <option value="FINANCE">Finance</option>
                             <option value="ACCOUNTANT">Accountant</option>
                         </SelectField>
-
                     </VStack>
                 </Box>
 
-                {/* Card Footer */}
                 <Box
                     px={8}
                     py={5}
@@ -158,6 +172,7 @@ const CreateUserPage = () => {
                             variant="secondary"
                             size="md"
                             type="button"
+                            onClick={handleCancel}
                         >
                             Cancel
                         </Button>
@@ -169,7 +184,7 @@ const CreateUserPage = () => {
                             type="submit"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Creating...' : 'Create User'}
+                            {isSubmitting ? "Creating..." : "Create User"}
                         </Button>
                     </Box>
                 </Box>

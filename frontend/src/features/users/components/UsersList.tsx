@@ -53,11 +53,6 @@ const UsersList = () => {
             )
         },
         {
-            key:      "phone",
-            label:    "Phone Number",
-            sortable: true,
-        },
-        {
             key:    "role",
             label:  "Role",
             render: (value: unknown) => (
