@@ -1,13 +1,14 @@
-import { Navigate, Outlet } from "react-router-dom"
+import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/shared/context/useAuth'
 
-type Props = {
-  isAuthenticated: boolean
+const AuthGuard = () => {
+    const { isAuthenticated } = useAuth() // 👈 inside component ✅
+
+    if (!isAuthenticated) {
+        return <Navigate to="/auth" replace />
+    }
+
+    return <Outlet />
 }
 
-export default function AuthGuard({ isAuthenticated }: Props) {
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />
-  }
-
-  return <Outlet />
-}
+export default AuthGuard

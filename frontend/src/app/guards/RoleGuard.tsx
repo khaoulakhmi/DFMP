@@ -1,14 +1,18 @@
-import { Navigate, Outlet } from "react-router-dom"
+import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/shared/context/useAuth'
 
-type Props = {
-  role: string
-  allowedRoles: string[]
+interface RoleGuardProps {
+    allowedRoles: string[]
 }
 
-export default function RoleGuard({ role, allowedRoles }: Props) {
-  if (!allowedRoles.includes(role)) {
-    return <Navigate to="/unauthorized" replace />
-  }
+const RoleGuard = ({ allowedRoles }: RoleGuardProps) => {
+    const { user } = useAuth() // 👈 inside component ✅
 
-  return <Outlet />
+    if (!user || !allowedRoles.includes(user.role)) {
+        return <Navigate to="/" replace />
+    }
+
+    return <Outlet />
 }
+
+export default RoleGuard
