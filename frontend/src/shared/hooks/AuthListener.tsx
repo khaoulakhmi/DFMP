@@ -5,6 +5,7 @@ export function AuthListener() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    console.log('AuthListener mounted')
     const handleLogout = () => navigate('/login', { replace: true })
 
     window.addEventListener('auth:logout', handleLogout)
