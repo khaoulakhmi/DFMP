@@ -2,7 +2,7 @@
 import { Outlet } from 'react-router-dom'
 import { AuthProvider } from '@/shared/context/AuthProvider'
 import { AuthListener } from '@/shared/hooks/AuthListener'
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster } from '@/shared/components/molecules/toast/toaster'
 
 const RootLayout = () => {
     return (
