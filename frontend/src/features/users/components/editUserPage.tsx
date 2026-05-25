@@ -6,6 +6,7 @@ import { Box, VStack, Heading, Text, SimpleGrid, Flex, Spinner } from "@chakra-u
 import Button from "@/shared/components/atoms/button"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import SelectField from "@/shared/components/molecules/Forms/selectField"
+import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNavigation"
 import { userApi } from "@/api/user.api"
 import type { UpdateUserDTO } from "@/shared/types/user.type"
 import Switch from "@/shared/components/atoms/switch"
@@ -84,16 +85,24 @@ const EditUserPage = () => {
 
     return (
         <Box p={6}>
+            <BreadcrumbNavigation
+                mb={4}
+                items={[
+                    { label: "Dashboard", href: "/" },
+                    { label: "Users", href: "/users" },
+                    { label: "Edit User", isCurrentPage: true },
+                ]}
+            />
 
             {/* Page Header */}
             <Flex justify="space-between" align="center" mb={6}>
-                <Box w="10" h="10">
+                <Box w="20">
                     <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => navigate("/users")}
                     >
-                        ←
+                        Back
                     </Button>
                 </Box>
                 <Box>

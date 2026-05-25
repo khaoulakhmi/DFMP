@@ -7,7 +7,7 @@ import type { CreateUserDTO } from "@/shared/types/user.type"
 import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
-import { toaster } from "@/components/ui/toaster"
+import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
 
 interface CreateUserPageProps {
     onCancel?: () => void;
