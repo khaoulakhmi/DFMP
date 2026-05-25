@@ -1,11 +1,10 @@
-import type { ComponentProps } from "react"
 import FormField from "@/shared/components/molecules/Forms/formfield"
-import Select from "@/shared/components/atoms/select"
+import Select, { type SelectProps } from "@/shared/components/atoms/select"
 
-type SelectFieldProps = ComponentProps<typeof Select> & {
+type SelectFieldProps = SelectProps & {
   label?: string
   helper?: string
-  error?: string
+  error?: string | undefined
   required?: boolean
   showRequiredIndicator?: boolean
 }
