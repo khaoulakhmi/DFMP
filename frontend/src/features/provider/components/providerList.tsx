@@ -1,5 +1,5 @@
 import { providerApi } from "@/api/provider.api"
-import { toaster } from "@/components/ui/toaster"
+import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
 import Badge from "@/shared/components/atoms/badge"
 import Table from "@/shared/components/organisms/Table"
 import type { Provider } from "@/shared/types/provider.types"
