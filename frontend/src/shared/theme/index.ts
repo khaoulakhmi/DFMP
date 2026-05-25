@@ -6,6 +6,7 @@ import { typography } from "./typography";
 import { spacing } from "./spacing";
 import { checkboxRecipe } from "@/shared/theme/recipes/checkbox.recipe";
 import { typographyRecipe } from "./recipes/typography.recipe";
+import { badgeRecipe } from "./recipes/badge.recipe";
 
 
 const config = defineConfig({
@@ -85,6 +86,7 @@ const config = defineConfig({
             button: buttonRecipe,
             input: inputRecipe,
             typography: typographyRecipe,
+            badge: badgeRecipe,
         },
         slotRecipes: {
             checkbox: checkboxRecipe,
