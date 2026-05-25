@@ -1,8 +1,9 @@
 import { providerApi } from "@/api/provider.api"
-import { toaster } from "@/components/ui/toaster"
+import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
 import Button from "@/shared/components/atoms/button"
 import Typography from "@/shared/components/atoms/typography"
 import TextField from "@/shared/components/molecules/Forms/textField"
+import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNavigation"
 import type { UpdateProviderDTO } from "@/shared/types/provider.types"
 import { Box, Flex, HStack, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -212,6 +213,15 @@ const EditProviderPage = () => {
 
     return (
         <Box>
+            <BreadcrumbNavigation
+                mb={4}
+                items={[
+                    { label: "Dashboard", href: "/" },
+                    { label: "Providers", href: "/providers" },
+                    { label: "Edit Provider", isCurrentPage: true },
+                ]}
+            />
+
             <Box
                 mb={6}
                 bg="white"

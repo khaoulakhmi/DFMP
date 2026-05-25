@@ -1,5 +1,5 @@
 import { providerApi } from "@/api/provider.api"
-import { toaster } from "@/components/ui/toaster"
+import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
 import Button from "@/shared/components/atoms/button"
 import Typography from "@/shared/components/atoms/typography"
 import TextField from "@/shared/components/molecules/Forms/textField"
