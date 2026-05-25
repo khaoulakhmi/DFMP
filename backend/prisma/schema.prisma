@@ -34,11 +34,12 @@ model Provider {
   phone     String
   bankAccountNumber Int
   bankName String
-  NIF       String
-  NIS       String
+  NIF       Float
+  NIS       Float
   address   String
   commercialRegisterNumber Int
-  articleNumber String
+  markets                 Market[]
+  invoices                Invoice[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -52,9 +53,165 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
+model Designation {
+  id          Int      @id @default(autoincrement())
+  name        String   
+  description String?  
+  products    Product[]
+  lots        Lot[]
+  specifications Specifications[]
+}
+
+model Residence {
+  id              Int      @id @default(autoincrement())
+  name            String   // Nom Residence [1, 2]
+  address         String
+  numberOfUnits   Int      // Nbre Résidence [1, 2]
+  restaurants     Restaurant[]
+}
+
+model Restaurant {
+  id          Int       @id @default(autoincrement())
+  name        String    
+  residenceId Int
+  residence   Residence @relation(fields: [residenceId], references: [id])
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  name            String 
+  unit            String   
+  unitPrice       Float
+  evaluationPrice Float    
+  tva             TVA
+  providerPrice   Float    
+  quantityMin     Int      
+  quantityMax     Int      
+  designationId   Int
+  designation   Designation @relation(fields: [designationId], references: [id])     
+  lotId           Int
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Lot {
+  id              Int               @id @default(autoincrement())
+  name            String            
+  designationId       Int
+  designation         Designation      @relation(fields: [designationId], references: [id])     
+  products        Product[]
+  markets         Market[]
+  specifications  Specifications?   @relation(fields: [specificationsId], references: [id])
+  specificationsId Int?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Specifications {
+  id                  Int       @id @default(autoincrement()) // Cahier de Charge [1, 3]
+  type                String
+  designationId       Int
+  designation         Designation      @relation(fields: [designationId], references: [id])     
+  minAmount           Float     // Montant Min [3]
+  maxAmount           Float     // Montant Max [3]
+  year                Int       // Année [3]
+  
+  // Internal Timeline
+  depositDateCM       DateTime? // Date du Depot C.M. [3]
+  sessionDate         DateTime? // Date du Séance [3]
+  visaDate            DateTime? // Date Visa [3]
+  visaNumber          String?   // N° Visa [3]
+
+  // Publicity Tracking [3]
+  pubArabicDate       DateTime?
+  pubArabicJournal    String?
+  pubFrenchDate       DateTime?
+  pubFrenchJournal    String?
+  pubArElecJournal    String?
+  pubFrElecJournal    String?
+
+  lots                Lot[]
+  tendering           Tendering?
+}
+
+model Tendering {
+  id                  Int            @id @default(autoincrement())
+  specificationsId    Int            @unique
+  specifications      Specifications @relation(fields: [specificationsId], references: [id])
+  
+  // Evaluation Phase [3]
+  openingDate         DateTime?      // Date l'ouverture
+  techEvalDate        DateTime?      // Date evaluation technique
+  finEvalDate         DateTime?      // Date evaluation financière
+  
+  // Attribution [3]
+  attributionDate     DateTime?      // Date attribution
+  delayPeriodDays     Int            @default(10) // Délai 10 jours
+  
+  // Appeals (Recours) [3]
+  appealDate          DateTime?
+  appealDepositDate   DateTime?
+  appealResult        String?        // Nom (Retour) OK
+  programmingDate     DateTime?      // Date programmation
+  avsStatus           AVSStatus?     // A.V.S. Fondu / Non fondu
+}
+
+model Market {
+  id              Int       @id @default(autoincrement()) // Marché [1, 2]
+  marketNumber    String    @unique // N° du Marché
+  providerId      String
+  provider        Provider  @relation(fields: [providerId], references: [id])
+  lotId           Int
+  lot             Lot       @relation(fields: [lotId], references: [id])
+  date            DateTime
+  
+  // Administrative Visas [1, 2]
+  depositDate     DateTime?
+  visaNumberCM    String?   // N° visa C.M.
+  visaDateCM      DateTime? // Date visa C.M.
+  visaNumberCF    String?   // N° visa C.F. (Contrôle Financier)
+  visaDateCF      DateTime? // Date visa C.F.
+
+  invoices        Invoice[]
+  status          DealStatus @default(PENDING)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Invoice {
+  id              Int      @id @default(autoincrement()) // Facture [1, 2]
+  invoiceNumber   String   @unique // N° Facture
+  providerId      String
+  provider        Provider @relation(fields: [providerId], references: [id])
+  marketId        Int
+  market          Market   @relation(fields: [marketId], references: [id])
+  amount          Float    // Montant
+  quantity        Int      // Qtite
+  createdAt       DateTime @default(now())
+}
+
 enum Role {
     ADMIN
     SALES
     FINANCE
     ACCOUNTANT
 }
+
+enum TVA {
+    ZERO
+    NINE
+    NINETEEN
+}
+
+enum DealStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum AVSStatus {
+    FONDU
+    NON_FONDU
+}
+
