@@ -115,7 +115,7 @@ const CreateProviderPage = () => {
                     border="1px solid"
                     borderColor="primary.200"
                     borderRadius="lg"
-                    maxW={{ base: "full", md: "72" }}
+                    // maxW={{ base: "full", md: "72" }}
                 >
                     <Text fontSize="xs" color="primary.700" fontWeight="medium">
                         Required fields are validated before the provider is saved.
