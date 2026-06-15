@@ -9,6 +9,7 @@ import Designation from "@/features/designation"
 import EditDesignationPage from "@/features/designation/components/editDesignationPage"
 import DesignationExplorer from "@/features/designation/components/designationExplorer"
 import Lot from "@/features/lot"
+import LotDetailPage from "@/features/lot/components/lotDetail"
 import NotFound from "@/features/notFound"
 import Product from "@/features/product"
 import ProductDetailPage from "@/features/product/components/ProductDetailPage"
@@ -37,6 +38,7 @@ const paths = {
     providerCreate: "create",
     providerEdit: ":id/edit",
     lots: "/lots",
+    lotDetails: "/lots/:id",
     products: "/products",
     productDetails: "/products/:id",
     productCreate: "/product/create",
@@ -86,6 +88,7 @@ const salesRoutes: RouteObject = {
             ],
         },
         { path: paths.lots, element: <Lot /> },
+        { path: paths.lotDetails, element: <LotDetailPage /> },
         { path: paths.products, element: <Product /> },
         { path: paths.productCreate, element: <CreateProductPage/>},
         { path: paths.productDetails, element: <ProductDetailPage /> },

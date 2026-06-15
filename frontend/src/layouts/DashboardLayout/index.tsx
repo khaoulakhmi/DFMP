@@ -9,18 +9,19 @@ const DashboardLayout = () => {
     <>
       <Navbar />
 
-      <HStack align="stretch" >
+      <HStack align="stretch" gap={0}>
         <Sidebar />
 
         {/* MAIN AREA */}
-        <Box flex="1" bg="neutral.50" minH="calc(100vh - 64px)">
+        <Box flex="1" minW={0} bg="neutral.50" minH="calc(100vh - 64px)">
           
           {/* CENTERED CONTAINER */}
           <Box
+            w="full"
             maxW="1100px"
             mx="auto"     // 👈 THIS CENTERS EVERYTHING
-            px={6}
-            py={6}
+            px={{ base: 3, sm: 4, md: 6 }}
+            py={{ base: 4, md: 6 }}
           >
             <Outlet />
           </Box>
