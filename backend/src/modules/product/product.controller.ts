@@ -7,10 +7,13 @@ export const ProductController = {
     createProduct: async (req: Request, res: Response) => {
         
         const data = req.body;
+        console.log("Received product data:", data); // Debug log
         try {
             const product = await ProductService.createProduct(data);
+            console.log("Created product:", product); // Debug log
             res.status(201).json(product);
         } catch (error) {
+            console.error("Error creating product:", error); // Debug log
             res.status(500).json({ error: "Failed to create product" });
         } 
     },

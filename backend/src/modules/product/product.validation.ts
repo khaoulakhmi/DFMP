@@ -6,6 +6,10 @@ export const createProductSchema = z.object({
     unit: z.string().min(2, "Unit is required"),
     unitPrice: z.number().positive("Unit price must be a positive number"),
     tva: z.enum(TVA, "Invalid TVA value"),
+    quantityMax: z.number().positive("Quantity max must be a positive number").optional(),  
+    quantityMin: z.number().positive("Quantity min must be a positive number").optional(),
+    evaluationPrice: z.number().positive("Evaluation price must be a positive number").optional(),
+    providerPrice: z.number().positive("Provider price must be a positive number").optional(),
     designationId: z.number().positive("Designation ID must be a positive number"),
 });
 

@@ -8,6 +8,10 @@ export type createProductDTO = {
     unit: string;
     unitPrice: number;
     tva: TVA;
+    quantityMax?: number;
+    quantityMin?: number;
+    evaluationPrice?: number;
+    providerPrice?: number;
     designation: Designation;
 }
 
