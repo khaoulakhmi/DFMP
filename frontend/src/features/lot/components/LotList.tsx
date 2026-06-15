@@ -5,6 +5,7 @@ import type { Lot } from "@/shared/types/lot.types"
 import type { Column } from "@/shared/types/table.types"
 import { Text, VStack } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
+import { Link as RouterLink } from "react-router-dom"
 
 const columns: Column<Lot>[] = [
     {
@@ -13,7 +14,15 @@ const columns: Column<Lot>[] = [
         sortable: true,
         render: (value, row) => (
             <VStack align="start" gap={0.5}>
-                <Text fontSize="sm" fontWeight="semibold" color="neutral.900">{String(value)}</Text>
+                <Text
+                    asChild
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color="neutral.900"
+                    _hover={{ color: "primary.600", textDecoration: "none" }}
+                >
+                    <RouterLink to={`/lots/${row.id}`}>{String(value)}</RouterLink>
+                </Text>
                 <Text fontSize="xs" color="neutral.500">{row.designation?.name ?? `Designation ${row.designationId}`}</Text>
             </VStack>
         ),
@@ -23,7 +32,7 @@ const columns: Column<Lot>[] = [
         label: "Products",
         render: value => {
             const count = Array.isArray(value) ? value.length : 0
-            return <Badge label={`${count} product${count === 1 ? "" : "s"}`} variant={count ? "primary" : "neutral"} />
+            return <Badge label={`${count} product${count === 1 ? "" : "s"}`} variant={count ? "accent" : "neutral"} />
         },
     },
     {
