@@ -22,7 +22,9 @@ const Sidebar = () => {
   return (
     <Box
       as="aside"
+      display={{ base: "none", md: "block" }}
       w="64"
+      flexShrink={0}
       minH="100vh"
       bg="neutral.200"
       borderRight="1px solid"

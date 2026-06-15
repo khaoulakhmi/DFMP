@@ -1,6 +1,6 @@
 import { Box, Flex, HStack, Image, Text } from "@chakra-ui/react"
 import { useMemo, useState, type FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import logo from "@/assets/logo2.png"
 import Button from "@/shared/components/atoms/button"
 import Input from "@/shared/components/atoms/input"
@@ -28,6 +28,7 @@ const getInitials = (name?: string) => {
 const Navbar = () => {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
     const [search, setSearch] = useState("")
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -62,6 +63,11 @@ const Navbar = () => {
         }
     }
 
+    const isItemActive = (path: string) => {
+        if (path === "/") return location.pathname === "/"
+        return location.pathname.startsWith(path)
+    }
+
     return (
         <Box
             as="nav"
@@ -71,12 +77,13 @@ const Navbar = () => {
             bg="primary.700"
             color="white"
             px={{ base: 4, md: 6 }}
-            py={3}
+            pt={3}
+            pb={{ base: 2, md: 3 }}
             borderBottom="1px solid"
             borderColor="primary.800"
             boxShadow="sm"
         >
-            <Flex align="center" justify="space-between" gap={4}>
+            <Flex align="center" justify="space-between" gap={{ base: 2, md: 4 }}>
                 <HStack
                     gap={3}
                     minW="fit-content"
@@ -124,7 +131,7 @@ const Navbar = () => {
                     />
                 </Box>
 
-                <HStack gap={{ base: 2, md: 4 }} minW="fit-content">
+                <HStack gap={{ base: 2, md: 4 }} minW="0">
                     <HStack
                         gap={2.5}
                         py={1}
@@ -161,7 +168,7 @@ const Navbar = () => {
                         </Box>
                     </HStack>
 
-                    <Box w={{ base: "24", md: "28" }}>
+                    <Box w={{ base: "20", sm: "24", md: "28" }} flexShrink={0}>
                         <Button
                             size="sm"
                             variant="secondary"
@@ -173,6 +180,38 @@ const Navbar = () => {
                     </Box>
                 </HStack>
             </Flex>
+
+            <HStack
+                display={{ base: "flex", md: "none" }}
+                gap={2}
+                mt={3}
+                overflowX="auto"
+                pb={1}
+                css={{ scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
+            >
+                {visibleItems.map(item => {
+                    const active = isItemActive(item.path)
+
+                    return (
+                        <Box
+                            asChild
+                            key={item.path}
+                            flexShrink={0}
+                            px={3}
+                            py={2}
+                            borderRadius="md"
+                            bg={active ? "white" : "rgba(255,255,255,0.08)"}
+                            color={active ? "primary.700" : "white"}
+                            border="1px solid"
+                            borderColor={active ? "white" : "rgba(255,255,255,0.14)"}
+                            fontSize="sm"
+                            fontWeight="semibold"
+                        >
+                            <NavLink to={item.path}>{item.label}</NavLink>
+                        </Box>
+                    )
+                })}
+            </HStack>
         </Box>
     )
 }
