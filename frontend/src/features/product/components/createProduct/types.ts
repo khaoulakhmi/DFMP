@@ -10,4 +10,5 @@ export type ProductForm = {
     quantityMax: number
     tva: TVA
     designationId: string
+    lotId?: string
 }

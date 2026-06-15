@@ -62,7 +62,7 @@ const ProductDetailPage = () => {
     const margin = product.unitPrice - product.providerPrice
 
     return (
-        <Box p={{ base: 4, md: 6 }}>
+        <Box p={{ base: 0, md: 6 }}>
             <Modal
                 open={isDeleteOpen}
                 onClose={() => {
@@ -90,8 +90,17 @@ const ProductDetailPage = () => {
             />
 
             <Box bg="white" border="1px solid" borderColor="neutral.200" borderRadius="xl" overflow="hidden" boxShadow="sm">
-                <Flex px={5} py={4} align="center" justify="space-between" borderBottom="1px solid" borderColor="neutral.200">
-                    <HStack gap={4}>
+                <Flex
+                    px={{ base: 4, md: 5 }}
+                    py={4}
+                    align={{ base: "stretch", sm: "center" }}
+                    justify="space-between"
+                    direction={{ base: "column", sm: "row" }}
+                    gap={3}
+                    borderBottom="1px solid"
+                    borderColor="neutral.200"
+                >
+                    <HStack gap={4} align="flex-start">
                         <Flex w="12" h="12" align="center" justify="center" bg="success.50" color="success.700" borderRadius="md">
                             <FiBox size={24} />
                         </Flex>
@@ -108,14 +117,14 @@ const ProductDetailPage = () => {
                     <Box color="neutral.500"><FiMoreHorizontal /></Box>
                 </Flex>
 
-                <SimpleGrid columns={{ base: 2, md: 4 }} borderBottom="1px solid" borderColor="neutral.200">
+                <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} borderBottom="1px solid" borderColor="neutral.200">
                     {[
                         ["Unit", product.unit],
                         ["Unit price", `${product.unitPrice} DA`],
                         ["Provider price", `${product.providerPrice} DA`],
                         ["Evaluation price", `${product.evaluationPrice} DA`],
                     ].map(([label, value]) => (
-                        <Box key={label} p={5} textAlign="center" borderEnd="1px solid" borderColor="neutral.200">
+                        <Box key={label} p={5} textAlign="center" borderEnd={{ md: "1px solid" }} borderBottom={{ base: "1px solid", sm: "0" }} borderColor="neutral.200">
                             <Text fontSize="xs" color="neutral.600">{label}</Text>
                             <Text mt={1} fontSize="lg" fontWeight="bold">{value}</Text>
                         </Box>
@@ -136,9 +145,9 @@ const ProductDetailPage = () => {
                 </Box>
 
                 <VStack align="stretch" gap={3} p={5} borderBottom="1px solid" borderColor="neutral.200">
-                    <Flex justify="space-between"><Text>TVA applied</Text><Text fontWeight="bold">{tvaLabels[product.tva].replace("TVA ", "")}</Text></Flex>
-                    <Flex justify="space-between"><Text>Price TTC</Text><Text fontWeight="bold">{priceTtc.toFixed(2)} DA</Text></Flex>
-                    <Flex justify="space-between"><Text>Provider margin</Text><Text fontWeight="bold" color="success.700">+{margin.toFixed(2)} DA / {product.unit}</Text></Flex>
+                    <Flex justify="space-between" gap={3} wrap="wrap"><Text>TVA applied</Text><Text fontWeight="bold">{tvaLabels[product.tva].replace("TVA ", "")}</Text></Flex>
+                    <Flex justify="space-between" gap={3} wrap="wrap"><Text>Price TTC</Text><Text fontWeight="bold">{priceTtc.toFixed(2)} DA</Text></Flex>
+                    <Flex justify="space-between" gap={3} wrap="wrap"><Text>Provider margin</Text><Text fontWeight="bold" color="success.700">+{margin.toFixed(2)} DA / {product.unit}</Text></Flex>
                     <Flex justify="space-between">
                         <Text>Parent lot</Text>
                         <HStack gap={1} color="primary.700">

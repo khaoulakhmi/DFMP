@@ -14,7 +14,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm, useWatch } from "react-hook-form"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { designationApi } from "@/api/designation.api"
-import { lotApi } from "@/api/lot.api"
 
 const required = (label: string) => `${label} is required`
 
@@ -45,10 +44,6 @@ const CreateProductPage = () => {
     const { data: designations = [] } = useQuery({
         queryKey: ["designations"],
         queryFn: designationApi.getAll,
-    })
-    const { data: lots = [] } = useQuery({
-        queryKey: ["lots"],
-        queryFn: lotApi.getAll,
     })
     const [searchParams] = useSearchParams()
     const defaultDesignationId = searchParams.get("designationId") ?? ""

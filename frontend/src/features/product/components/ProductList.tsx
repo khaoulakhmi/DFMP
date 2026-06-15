@@ -1,13 +1,11 @@
 import { productApi } from "@/api/product.api"
-import Button from "@/shared/components/atoms/button"
 import Badge from "@/shared/components/atoms/badge"
 import Table from "@/shared/components/organisms/Table"
 import type { Product, TVA } from "@/shared/types/product.types"
 import type { Column } from "@/shared/types/table.types"
-import { Box, HStack, Text, VStack } from "@chakra-ui/react"
+import { Text, VStack } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
-import { FiPlus } from "react-icons/fi"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link as RouterLink} from "react-router-dom"
 
 const tvaLabels: Record<TVA, string> = {
     ZERO: "TVA 0%",
@@ -22,7 +20,9 @@ const columns: Column<Product>[] = [
         sortable: true,
         render: (value, row) => (
             <VStack align="start" gap={0.5}>
-                <Text fontSize="sm" fontWeight="semibold" color="neutral.900">{String(value)}</Text>
+                <Text fontSize="sm" fontWeight="semibold" color="neutral.900">
+                    <RouterLink to={`/products/${row.id}`}>{String(value)}</RouterLink>    
+                </Text>
                 <Text fontSize="xs" color="neutral.500">
                     {row.lot?.name ?? `Lot ${row.lotId}`} - {row.designation?.name ?? `Designation ${row.designationId}`}
                 </Text>
@@ -62,17 +62,7 @@ const ProductList = () => {
 
     return (
         <VStack align="stretch" gap={4}>
-            <HStack justify="space-between" align="center">
-                <Box>
-                    <Text fontSize="lg" fontWeight="semibold" color="neutral.900">Products</Text>
-                    <Text fontSize="sm" color="neutral.500">Browse catalog products.</Text>
-                </Box>
-                <Box w="44">
-                    <Button onClick={() => navigate("/product/create")}>
-                        <HStack justify="center" gap={2}><FiPlus /><Text>Add Product</Text></HStack>
-                    </Button>
-                </Box>
-            </HStack>
+            
             <Table
                 data={products}
                 columns={columns}
