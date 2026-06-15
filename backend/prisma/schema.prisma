@@ -82,15 +82,15 @@ model Product {
   name            String 
   unit            String   
   unitPrice       Float
-  evaluationPrice Float    
+  evaluationPrice Float?    
   tva             TVA
-  providerPrice   Float    
+  providerPrice   Float?    
   quantityMin     Int      
   quantityMax     Int      
   designationId   Int
   designation   Designation @relation(fields: [designationId], references: [id])     
-  lotId           Int
-  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lotId           Int?
+  lot             Lot?      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
