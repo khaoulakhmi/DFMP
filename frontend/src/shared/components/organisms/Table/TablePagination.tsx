@@ -26,19 +26,21 @@ const TablePagination = ({
 
     return (
         <Flex
-            px={6} py={4}
+            px={{ base: 4, md: 6 }} py={4}
             borderTop="1px solid"
             borderColor="neutral.200"
             bg="neutral.50"
             justify="space-between"
-            align="center"
+            align={{ base: "stretch", sm: "center" }}
+            direction={{ base: "column", sm: "row" }}
+            gap={3}
         >
             <Text fontSize="sm" color="neutral.500">
                 Page {page} of {totalPages}
             </Text>
 
-            <HStack gap={2}>
-                <Box w="24">
+            <HStack gap={2} overflowX="auto" pb={{ base: 1, sm: 0 }}>
+                <Box w={{ base: "20", sm: "24" }} flexShrink={0}>
                     <Button
                         variant="secondary"
                         size="sm"
@@ -57,6 +59,7 @@ const TablePagination = ({
                     ) : (
                         <Box
                             key={p}
+                            flexShrink={0}
                             w="8" h="8"
                             display="flex"
                             alignItems="center"
@@ -77,7 +80,7 @@ const TablePagination = ({
                     )
                 )}
 
-                <Box w="24">
+                <Box w={{ base: "20", sm: "24" }} flexShrink={0}>
                     <Button
                         variant="secondary"
                         size="sm"

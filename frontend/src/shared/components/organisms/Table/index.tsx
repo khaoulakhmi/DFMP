@@ -123,7 +123,7 @@ const Table = <T extends Record<string, unknown>>({
     )
 
     return (
-        <Box bg="white" borderRadius="xl" border="1px solid" borderColor="neutral.200" overflow="hidden" boxShadow="sm">
+        <Box bg="white" borderRadius="xl" border="1px solid" borderColor="neutral.200" overflow="hidden" boxShadow="sm" minW={0}>
 
             <TableToolbar
                 total={sorted.length}
@@ -136,8 +136,8 @@ const Table = <T extends Record<string, unknown>>({
                 {...(actions  && { actions })}   //
             />
 
-            <Box overflowX="auto">
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <Box overflowX="auto" w="full">
+                <table style={{ width: "100%", minWidth: "720px", borderCollapse: "collapse" }}>
                     <TableHead
                         columns={columns}
                         hasActions={false}

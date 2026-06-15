@@ -6,7 +6,7 @@ const CHEVRON_DOWN = "↓"
 const CHEVRON_BOTH = "↕"
 
 const thStyle = {
-    padding:         "12px 24px",
+    padding:         "12px 16px",
     textAlign:       "left" as const,
     fontSize:        "11px",
     fontWeight:      600,
@@ -43,7 +43,7 @@ const TableHead = <T extends Record<string, unknown>>({
             <tr style={{ borderBottom: "1px solid #e3eaee" }}>
 
                 {/* Checkbox column */}
-                <th style={{ ...thStyle, width: "48px", padding: "12px 16px 12px 24px" }}>
+                <th style={{ ...thStyle, width: "48px", padding: "12px 12px 12px 16px" }}>
                     <Box
                         w="4" h="4"
                         border="1.5px solid"

@@ -29,18 +29,19 @@ const TableToolbar = <T extends Record<string, unknown>>({
 
     return (
         <Flex
-            px={6} py={4}
+            px={{ base: 4, md: 6 }} py={4}
             bg={hasSelection ? "primary.50" : "neutral.50"}
             borderBottom="1px solid"
             borderColor={hasSelection ? "primary.200" : "neutral.200"}
             justify="space-between"
-            align="center"
+            align={{ base: "stretch", sm: "center" }}
+            direction={{ base: "column", sm: "row" }}
             gap={4}
             flexWrap="wrap"
             transition="all 0.2s ease"
         >
             {/* Left — count or selection info */}
-            <HStack gap={3}>
+            <HStack gap={3} minW={0}>
                 {hasSelection ? (
                     <>
                         {/* Clear selection */}
@@ -74,10 +75,10 @@ const TableToolbar = <T extends Record<string, unknown>>({
 
             {/* Right — actions or search */}
             {hasSelection ? (
-                <HStack gap={2}>
+                <HStack gap={2} flexWrap="wrap" justify={{ base: "stretch", sm: "flex-end" }}>
                     {/* Edit — only for single selection */}
                     {onEdit && selectedRows.length === 1 && (
-                        <Box w="20">
+                        <Box w={{ base: "full", sm: "20" }}>
                             <Button
                                 variant="secondary"
                                 size="sm"
@@ -95,7 +96,7 @@ const TableToolbar = <T extends Record<string, unknown>>({
                     {actions && actions
                         .filter(action => !action.showWhen || action.showWhen(selectedRows))
                         .map((action, i) => (
-                            <Box key={i} w="auto" minW="20">
+                            <Box key={i} w={{ base: "full", sm: "auto" }} minW="20">
                                 <Button
                                     variant={action.variant ?? "secondary"}
                                     size="sm"
@@ -109,7 +110,7 @@ const TableToolbar = <T extends Record<string, unknown>>({
                 </HStack>
             ) : (
                 searchable && (
-                    <Box w="64">
+                    <Box w={{ base: "full", sm: "64" }}>
                         <TextField
                             placeholder="Search..."
                             value={search}

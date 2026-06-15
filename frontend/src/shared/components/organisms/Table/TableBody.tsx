@@ -11,7 +11,7 @@ interface TableBodyProps<T> {
 }
 
 const tdStyle = {
-    padding:    "14px 24px",
+    padding:    "14px 16px",
     fontSize:   "14px",
     color:      "#3a5258",
     whiteSpace: "nowrap" as const,
@@ -46,7 +46,7 @@ const TableBody = <T extends Record<string, unknown>>({
                         }}
                     >
                         {/* Checkbox */}
-                        <td style={{ padding: "14px 16px 14px 24px", width: "48px" }}>
+                        <td style={{ padding: "14px 12px 14px 16px", width: "48px" }}>
                             <Box
                                 w="4" h="4"
                                 border="1.5px solid"
