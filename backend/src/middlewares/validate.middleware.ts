@@ -1,8 +1,8 @@
 // src/middlewares/validate.middleware.ts
 import { Request, Response, NextFunction } from 'express'
-import { AnyZodObject, ZodError } from 'zod'
+import { ZodError, type ZodType } from 'zod'
 
-export const validate = (schema: AnyZodObject) => {
+export const validate = (schema: ZodType) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             schema.parse({
@@ -15,7 +15,7 @@ export const validate = (schema: AnyZodObject) => {
             if (error instanceof ZodError) {
                 return res.status(400).json({
                     message: 'Validation failed',
-                    errors: error.errors.map((e: any) => ({
+                    errors: error.issues.map((e: any) => ({
                         field:   e.path.join('.'), // e.g "body.password"
                         message: e.message         // e.g "Password must be at least 6 characters"
                     }))
