@@ -17,6 +17,28 @@ export type SpecificationSummary = {
     minAmount: number
     maxAmount: number
     year: number
+    depositDateCM?: string | null
+    sessionDate?: string | null
+    visaDate?: string | null
+    visaNumber?: string | null
+    pubArabicDate?: string | null
+    pubArabicJournal?: string | null
+    pubFrenchDate?: string | null
+    pubFrenchJournal?: string | null
+    pubArElecJournal?: string | null
+    pubFrElecJournal?: string | null
+    tendering?: {
+        openingDate: string | null
+        techEvalDate: string | null
+        finEvalDate: string | null
+        attributionDate: string | null
+        delayPeriodDays: number
+        appealDate: string | null
+        appealDepositDate: string | null
+        appealResult: string | null
+        programmingDate: string | null
+        avsStatus: string | null
+    } | null
 }
 
 export type CreateDesignationDTO = {
