@@ -38,14 +38,30 @@ export const LotService = {
         // Logic to get a lot by ID
         return await prisma.lot.findUnique({
             where: { id: lotId },
-            include: { designation: true, products: true, specifications: true }
+            include: {
+                designation: true,
+                products: true,
+                specifications: {
+                    include: {
+                        tendering: true,
+                    },
+                },
+            },
         });
     },
 
     getAllLots: async () => {
         // Logic to get all lots
         return await prisma.lot.findMany({
-            include: { designation: true, products: true, specifications: true },
+            include: {
+                designation: true,
+                products: true,
+                specifications: {
+                    include: {
+                        tendering: true,
+                    },
+                },
+            },
             orderBy: { id: "desc" }
         });
     }
