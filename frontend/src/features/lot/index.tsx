@@ -13,7 +13,7 @@ import { designationApi } from "@/api/designation.api"
 const Lot = () => {
 
     const [createLotOpen, SetCreateLotOpen] = useState(false)
-    const {data: designations = [] as Designation[], isLoading, isError} = useQuery({
+    const {data: designations = [] as Designation[]} = useQuery({
         queryKey: ["designations"],
         queryFn: designationApi.getAll,
     })

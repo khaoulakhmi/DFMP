@@ -2,11 +2,7 @@ import type { Lot } from "@/shared/types/lot.types"
 import type { TVA } from "@/shared/types/product.types"
 
 export type SpecificationDetails = NonNullable<Lot["specifications"]> & {
-    visaNumber?: string | null
-    visaDate?: string | null
-    depositDateCM?: string | null
-    sessionDate?: string | null
-    openingDate?: string | null
+    tendering?: NonNullable<Lot["specifications"]>["tendering"]
 }
 
 export const tvaLabels: Record<TVA, string> = {

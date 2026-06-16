@@ -1,5 +1,4 @@
 import type { Lot } from "@/shared/types/lot.types"
-import type { Product } from "@/shared/types/product.types"
 import { SimpleGrid } from "@chakra-ui/react"
 import { FiBriefcase, FiClipboard, FiFileText, FiPackage } from "react-icons/fi"
 import { MetricCard } from "./lot-detail.components"
@@ -13,7 +12,7 @@ type Props = {
     invoiceCount: number
 }
 
-const LotDetailMetrics = ({ lot, spec, productCount, marketCount, invoiceCount }: Props) => (
+const LotDetailMetrics = ({ spec, productCount, marketCount, invoiceCount }: Props) => (
     <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} gap={4} mb={7}>
         <MetricCard
             icon={<FiPackage />}

@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi"
 import { DetailSection, SpecInfo } from "./lot-detail.components"
 import { formatDate, formatShortDate, formatMoney, type SpecificationDetails } from "./lot-detail.types"
+import { useNavigate } from "react-router-dom"
 
 type TimelineItemProps = {
     label: string
@@ -51,14 +52,17 @@ type Props = {
     spec: SpecificationDetails | null | undefined
 }
 
-const SpecificationSection = ({ lot, spec }: Props) => {
+const SpecificationSection = ({ spec }: Props) => {
+    const navigate = useNavigate()
+    const tendering = spec?.tendering
+    const avsStatus = tendering?.avsStatus ? tendering.avsStatus.replace("_", " ") : "-"
     const timeline = [
-        { label: "Depot C.M.", date: formatShortDate(spec?.depositDateCM ?? lot.createdAt), status: "done" as const },
-        { label: "Seance",     date: formatShortDate(spec?.sessionDate),                    status: "done" as const },
-        { label: "Visa",       date: formatShortDate(spec?.visaDate),                       status: "done" as const },
-        { label: "Ouverture",  date: formatShortDate(spec?.openingDate),                    status: "done" as const },
-        { label: "Attribution",date: "En cours",                                            status: "current" as const },
-        { label: "A.V.S.",     date: "-",                                                   status: "pending" as const },
+        { label: "Depot C.M.", date: formatShortDate(spec?.depositDateCM), status: spec?.depositDateCM ? "done" as const : "pending" as const },
+        { label: "Seance",     date: formatShortDate(spec?.sessionDate),   status: spec?.sessionDate ? "done" as const : "pending" as const },
+        { label: "Visa",       date: formatShortDate(spec?.visaDate),      status: spec?.visaDate ? "done" as const : "pending" as const },
+        { label: "Ouverture",  date: formatShortDate(tendering?.openingDate), status: tendering?.openingDate ? "done" as const : "pending" as const },
+        { label: "Attribution",date: formatShortDate(tendering?.attributionDate), status: tendering?.attributionDate ? "done" as const : "current" as const },
+        { label: "A.V.S.",     date: avsStatus,                            status: tendering?.avsStatus ? "done" as const : "pending" as const },
     ]
 
     return (
@@ -67,7 +71,7 @@ const SpecificationSection = ({ lot, spec }: Props) => {
             icon={<FiFileText />}
             action={(
                 <Box w="36">
-                    <Button type="button" variant="secondary" size="sm">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => navigate(`/specifications/${spec?.id}`)}>
                         <HStack justify="center" gap={1}><Text>Voir details</Text><FiArrowUpRight /></HStack>
                     </Button>
                 </Box>
@@ -76,14 +80,11 @@ const SpecificationSection = ({ lot, spec }: Props) => {
             <Box bg="white" border="1px solid" borderColor="neutral.200" borderRadius="lg" overflow="hidden">
                 <SimpleGrid columns={{ base: 1, md: 4 }} borderBottom="1px solid" borderColor="neutral.200">
                     <Box p={4} borderEnd={{ md: "1px solid" }} borderColor="neutral.200">
-                        <SpecInfo label="Type" value={spec?.type ?? "Appel d'offres"} />
-                        <SpecInfo
-                            label="N° Visa"
-                            value={spec?.visaNumber ?? (spec ? `VIS-${spec.year}-${String(spec.id).padStart(3, "0")}` : "-")}
-                        />
+                        <SpecInfo label="Type" value={spec?.type ?? "-"} />
+                        <SpecInfo label="N° Visa" value={spec?.visaNumber ?? "-"} />
                     </Box>
                     <Box p={4} borderEnd={{ md: "1px solid" }} borderColor="neutral.200">
-                        <SpecInfo label="Annee" value={String(spec?.year ?? new Date(lot.createdAt).getFullYear())} />
+                        <SpecInfo label="Annee" value={spec?.year ? String(spec.year) : "-"} />
                         <SpecInfo label="Date visa" value={formatDate(spec?.visaDate)} />
                     </Box>
                     <Box p={4} borderEnd={{ md: "1px solid" }} borderColor="neutral.200">

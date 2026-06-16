@@ -3,7 +3,7 @@ import Button from "@/shared/components/atoms/button"
 import type { Lot } from "@/shared/types/lot.types"
 import type { Product } from "@/shared/types/product.types"
 import { Box, Flex, HStack, Text, VStack } from "@chakra-ui/react"
-import { FiChevronRight, FiLink, FiPackage, FiPlus, FiShoppingCart } from "react-icons/fi"
+import { FiChevronRight, FiPackage, FiPlus, FiShoppingCart } from "react-icons/fi"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { DetailSection } from "./lot-detail.components"
@@ -64,7 +64,6 @@ type Props = {
 }
 
 const ProductsSection = ({ lot, products }: Props) => {
-    const navigate = useNavigate()
     const [modalOpen, setModalOpen] = useState(false)
     const assignedIds = products.map(p => p.id)
 
@@ -97,11 +96,11 @@ const ProductsSection = ({ lot, products }: Props) => {
                     >
                         <Text fontSize="sm" color="neutral.500">Aucun produit dans ce lot.</Text>
                         <HStack gap={2}>
-                            <Button type="button" variant="secondary" size="sm" onClick={() => setModalOpen(true)}>
+                            {/* <Button type="button" variant="secondary" size="sm" onClick={() => setModalOpen(true)}>
                                 <HStack gap={1}><FiLink /><Text>Affecter un existant</Text></HStack>
-                            </Button>
-                            <Button type="button" variant="secondary" size="sm" onClick={() => navigate(`/product/create?lotId=${lot.id}`)}>
-                                <HStack gap={1}><FiPlus /><Text>Creer un nouveau</Text></HStack>
+                            </Button> */}
+                            <Button type="button" variant="secondary" size="sm" onClick={() => setModalOpen(true)}>
+                                <HStack gap={1}><FiPlus /><Text>Ajouter un produit</Text></HStack>
                             </Button>
                         </HStack>
                     </Flex>
