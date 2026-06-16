@@ -7,6 +7,7 @@ import providerRouter from "./modules/provider/provider.routes";
 import designationRouter from "./modules/designation/designation.routes";
 import { ProductRouter } from "./modules/product/product.routes";
 import LotRouter from "./modules/lot/lot.routes";
+import SpecificationRouter from "./modules/specification/specification.routes";
 const app = express();
 
 app.use(cors({
@@ -20,6 +21,7 @@ app.use("/api/providers", providerRouter);
 app.use("/api/designations", designationRouter);
 app.use("/api/products", ProductRouter);
 app.use("/api/lots", LotRouter);
+app.use("/api/specifications", SpecificationRouter);
 app.get("/", (req: Request, res: Response) => {
   res.send("hello khaoula, API is running...");
 });
