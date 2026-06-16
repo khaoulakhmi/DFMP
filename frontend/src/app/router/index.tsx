@@ -19,6 +19,8 @@ import CreateProviderPage from "@/features/provider/components/createProviderPag
 import EditProviderPage from "@/features/provider/components/editProviderPage"
 import ProviderList from "@/features/provider/components/providerList"
 import Specifications from "@/features/specifications"
+import CreateSpecificationPage from "@/features/specifications/components/CreateSpecificationPage"
+import SpecificationDetailPage from "@/features/specifications/components/SpecificationDetailPage"
 import UsersPage from "@/features/users"
 import EditUserPage from "@/features/users/components/editUserPage"
 import AuthLayout from "@/layouts/AuthLayout"
@@ -47,6 +49,8 @@ const paths = {
     designationCreate: "create",
     designationEdit: ":id/edit",
     specifications: "/specifications",
+    specificationCreate: "create",
+    specificationDetails: ":id",
 } as const
 
 const adminOnly = [Role.ADMIN]
@@ -108,7 +112,14 @@ const financeRoutes: RouteObject = {
                 { path: paths.designationEdit, element: <EditDesignationPage /> },
             ],
         },
-        { path: paths.specifications, element: <Specifications /> },
+        {
+            path: paths.specifications,
+            element: <Specifications />,
+            children: [
+                { path: paths.specificationCreate, element: <CreateSpecificationPage /> },
+                { path: paths.specificationDetails, element: <SpecificationDetailPage /> },
+            ],
+        },
     ],
 }
 
