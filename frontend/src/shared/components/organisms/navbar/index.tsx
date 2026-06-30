@@ -4,16 +4,10 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import logo from "@/assets/logo2.png"
 import Button from "@/shared/components/atoms/button"
 import Input from "@/shared/components/atoms/input"
+import LanguageSwitcher from "@/shared/components/molecules/LanguageSwitcher"
 import { useAuth } from "@/shared/context/useAuth"
+import { useI18n } from "@/shared/i18n/useI18n"
 import { navItems } from "@/shared/utils/navigation"
-import type { Role } from "@/shared/types/user.type"
-
-const roleLabels: Record<Role, string> = {
-    ADMIN: "Admin",
-    SALES: "Sales",
-    FINANCE: "Finance",
-    ACCOUNTANT: "Accountant",
-}
 
 const getInitials = (name?: string) => {
     if (!name) return "?"
@@ -27,6 +21,7 @@ const getInitials = (name?: string) => {
 
 const Navbar = () => {
     const { user, logout } = useAuth()
+    const { t } = useI18n()
     const navigate = useNavigate()
     const location = useLocation()
     const [search, setSearch] = useState("")
@@ -102,7 +97,7 @@ const Navbar = () => {
                             DFMP
                         </Text>
                         <Text display={{ base: "none", sm: "block" }} fontSize="xs" color="primary.200" mt={1}>
-                            Management Platform
+                            {t("app.subtitle")}
                         </Text>
                     </Box>
                 </HStack>
@@ -118,14 +113,14 @@ const Navbar = () => {
                     <Input
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search sections..."
+                        placeholder={t("common.searchSections")}
                         size="sm"
                         variant="filled"
                         bg="white"
                         color="neutral.900"
                         rightIcon={
                             <Text as="span" fontSize="xs" color="neutral.500" fontWeight="semibold">
-                                Enter
+                                {t("common.enter")}
                             </Text>
                         }
                     />
@@ -160,13 +155,17 @@ const Navbar = () => {
 
                         <Box display={{ base: "none", sm: "block" }} minW="0">
                             <Text fontSize="sm" fontWeight="semibold" lineHeight="1.2" maxW="36" truncate>
-                                {user?.name ?? "Loading user"}
+                                {user?.name ?? t("common.loadingUser")}
                             </Text>
                             <Text fontSize="xs" color="primary.200" mt={0.5}>
-                                {user?.role ? roleLabels[user.role] : "Signed in"}
+                                {user?.role ? t(`roles.${user.role}`) : t("common.signedIn")}
                             </Text>
                         </Box>
                     </HStack>
+
+                    <Box w={{ base: "20", sm: "28" }} flexShrink={0}>
+                        <LanguageSwitcher />
+                    </Box>
 
                     <Box w={{ base: "20", sm: "24", md: "28" }} flexShrink={0}>
                         <Button
@@ -175,7 +174,7 @@ const Navbar = () => {
                             disabled={isLoggingOut}
                             onClick={handleLogout}
                         >
-                            {isLoggingOut ? "Signing out" : "Logout"}
+                            {isLoggingOut ? t("common.signingOut") : t("common.logout")}
                         </Button>
                     </Box>
                 </HStack>
