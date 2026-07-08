@@ -14,7 +14,7 @@ export const I18nContext = createContext<I18nContextValue | null>(null)
 const storageKey = "language"
 
 const isLanguage = (value: string | null): value is Language => (
-    value === "en" || value === "fr" || value === "ar"
+    value !== null && value in translations
 )
 
 const getInitialLanguage = (): Language => {
@@ -40,7 +40,9 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
         language,
         setLanguage: setLanguageState,
         t: (key, params = {}) => {
-            const template: string = translations[language][key] ?? translations[defaultLanguage][key] ?? key
+            const currentTranslations: Partial<Record<TranslationKey, string>> = translations[language]
+            const defaultTranslations: Record<TranslationKey, string> = translations[defaultLanguage]
+            const template = currentTranslations[key] ?? defaultTranslations[key] ?? key
 
             return Object.entries(params).reduce<string>(
                 (text, [paramKey, paramValue]) => text.replaceAll(`{{${paramKey}}}`, String(paramValue)),
