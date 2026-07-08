@@ -7,6 +7,7 @@ import type { Column } from "@/shared/types/table.types"
 import { Box, HStack, Text, VStack } from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const EMPTY_VALUE = "Not provided"
 
@@ -73,10 +74,10 @@ const exportProviders = (rows: Provider[]) => {
     URL.revokeObjectURL(url)
 }
 
-const columns: Column<Provider>[] = [
+const createProviderColumns = (t: ReturnType<typeof useI18n>["t"]): Column<Provider>[] => [
     {
         key: "name",
-        label: "Provider",
+        label: t("provider"),
         sortable: true,
         render: (value, row) => (
             <HStack gap={3}>
@@ -115,7 +116,7 @@ const columns: Column<Provider>[] = [
     },
     {
         key: "email",
-        label: "Contact",
+        label: t("provider.email"),
         sortable: true,
         render: (value, row) => (
             <VStack align="start" gap={0.5}>
@@ -134,7 +135,7 @@ const columns: Column<Provider>[] = [
     },
     {
         key: "address",
-        label: "Address",
+        label: t("provider.address"),
         render: (value) => (
             <Text
                 fontSize="sm"
@@ -205,6 +206,8 @@ const columns: Column<Provider>[] = [
 const ProviderList = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
+    const { t } = useI18n()
+    const columns = createProviderColumns(t)
 
     const { data: providers = [] as Provider[], isLoading, isError } = useQuery({
         queryKey: ["providers"],
@@ -217,14 +220,14 @@ const ProviderList = () => {
         onSuccess: (_, rows) => {
             queryClient.invalidateQueries({ queryKey: ["providers"] })
             toaster.create({
-                title: `${rows.length} provider${rows.length > 1 ? "s" : ""} deleted`,
+                title: t("providers.successDelete"),
                 type: "success",
             })
         },
         onError: () => {
             toaster.create({
                 title: "Error",
-                description: "Failed to delete providers.",
+                description: t("providers.errorDelete"),
                 type: "error",
             })
         },
@@ -236,11 +239,11 @@ const ProviderList = () => {
 
     const actions = [
         {
-            label: "Delete",
+            label: t("providers.delete"),
             variant: "danger" as const,
             onClick: (rows: Provider[]) => {
                 if (window.confirm(
-                    `Delete ${rows.length} provider${rows.length > 1 ? "s" : ""}?`,
+                    t("providers.confirmDelete"),
                 )) {
                     deleteMutation.mutate(rows)
                 }

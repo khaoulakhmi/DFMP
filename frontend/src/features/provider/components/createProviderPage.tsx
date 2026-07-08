@@ -8,8 +8,7 @@ import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
-
-const required = (label: string) => `${label} is required`
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const emailPattern = {
     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -46,6 +45,8 @@ const Section = ({
 const CreateProviderPage = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
+    const { t } = useI18n()
+    const required = (label: string) => t("validation.required", { field: label })
 
     const {
         register,
@@ -61,8 +62,8 @@ const CreateProviderPage = () => {
         onSuccess: (provider) => {
             queryClient.invalidateQueries({ queryKey: ["providers"] })
             toaster.create({
-                title: "Provider created",
-                description: `${provider.name} has been created successfully.`,
+                title: t("providers.successAdd"),
+                description: provider.name,
                 type: "success",
             })
             navigate("/providers")
@@ -70,7 +71,7 @@ const CreateProviderPage = () => {
         onError: () => {
             toaster.create({
                 title: "Error",
-                description: "Failed to create provider. Please try again.",
+                description: t("providers.errorAdd"),
                 type: "error",
             })
         },
@@ -118,7 +119,7 @@ const CreateProviderPage = () => {
                     // maxW={{ base: "full", md: "72" }}
                 >
                     <Text fontSize="xs" color="primary.700" fontWeight="medium">
-                        Required fields are validated before the provider is saved.
+                        {t("providers.requiredFields")}
                     </Text>
                 </Box>
             </Flex>
@@ -135,7 +136,7 @@ const CreateProviderPage = () => {
             >
                 <Box px={{ base: 5, md: 8 }} py={5} bg="neutral.50" borderBottom="1px solid" borderColor="neutral.200">
                     <Typography variant="body-sm" fontWeight="semibold" color="neutral.800">
-                        Provider Details
+                        {t("providers.details")}
                     </Typography>
                     <Text fontSize="xs" color="neutral.500" mt={1}>
                         This information appears in provider records, invoices, and purchase workflows.
@@ -150,13 +151,13 @@ const CreateProviderPage = () => {
                         >
                             <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                                 <TextField
-                                    label="Provider Name"
+                                    label={t("provider.name")}
                                     placeholder="e.g. Samir Benali"
                                     error={errors.name?.message}
                                     required
                                     showRequiredIndicator
                                     {...register("name", {
-                                        required: required("Provider name"),
+                                        required: required(t("provider.name")),
                                         minLength: {
                                             value: 2,
                                             message: "Provider name must be at least 2 characters",
@@ -186,25 +187,25 @@ const CreateProviderPage = () => {
                         >
                             <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                                 <TextField
-                                    label="Email"
+                                    label={t("provider.email")}
                                     placeholder="provider@example.com"
                                     type="email"
                                     error={errors.email?.message}
                                     required
                                     showRequiredIndicator
                                     {...register("email", {
-                                        required: required("Email"),
+                                        required: required(t("provider.email")),
                                         pattern: emailPattern,
                                     })}
                                 />
                                 <TextField
-                                    label="Phone"
+                                    label={t("provider.phone")}
                                     placeholder="0550123456"
                                     error={errors.phone?.message}
                                     required
                                     showRequiredIndicator
                                     {...register("phone", {
-                                        required: required("Phone"),
+                                        required: required(t("provider.phone")),
                                         minLength: {
                                             value: 6,
                                             message: "Phone must be at least 6 characters",
@@ -213,13 +214,13 @@ const CreateProviderPage = () => {
                                 />
                             </SimpleGrid>
                             <TextField
-                                label="Address"
+                                label={t("provider.address")}
                                 placeholder="Street, city, state"
                                 error={errors.address?.message}
                                 required
                                 showRequiredIndicator
                                 {...register("address", {
-                                    required: required("Address"),
+                                    required: required(t("provider.address")),
                                     minLength: {
                                         value: 4,
                                         message: "Address must be at least 4 characters",
@@ -317,7 +318,7 @@ const CreateProviderPage = () => {
                         {createMutation.isError && (
                             <Box p={3} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="md">
                                 <Typography variant="body-sm" color="error.600">
-                                    Failed to create provider. Please review the form and try again.
+                                    {t("providers.errorAdd")}
                                 </Typography>
                             </Box>
                         )}
@@ -369,7 +370,7 @@ const CreateProviderPage = () => {
                                 type="submit"
                                 disabled={createMutation.isPending}
                             >
-                                {createMutation.isPending ? "Creating..." : "Create Provider"}
+                                {createMutation.isPending ? t("provider.creating") : t("provider.create")}
                             </Button>
                         </Box>
                     </Flex>

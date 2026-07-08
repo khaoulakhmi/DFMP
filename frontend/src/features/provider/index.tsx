@@ -4,22 +4,24 @@ import CreateProviderPage from "@/features/provider/components/createProviderPag
 import ProviderList from "@/features/provider/components/providerList"
 import { Box } from "@chakra-ui/react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const Provider = () => {
     const navigate = useNavigate()
     const location = useLocation()
+    const { t } = useI18n()
     const isEditPage = location.pathname.includes("/edit")
     const activeTab = location.pathname.endsWith("/create") ? "create" : "list"
     const breadcrumbItems =
         activeTab === "create"
             ? [
                 { label: "Dashboard", href: "/" },
-                { label: "Providers", href: "/providers" },
-                { label: "Add Provider", isCurrentPage: true },
+                { label: t("providers"), href: "/providers" },
+                { label: t("providers.add"), isCurrentPage: true },
             ]
             : [
                 { label: "Dashboard", href: "/" },
-                { label: "Providers", isCurrentPage: true },
+                { label: t("providers"), isCurrentPage: true },
             ]
 
     if (isEditPage) {
@@ -45,12 +47,12 @@ const Provider = () => {
                 }}
                 options={[
                     {
-                        label: "Provider List",
+                        label: t("providers.list"),
                         value: "list",
                         content: <ProviderList />,
                     },
                     {
-                        label: "Add Provider",
+                        label: t("providers.add"),
                         value: "create",
                         content: <CreateProviderPage />,
                     },
