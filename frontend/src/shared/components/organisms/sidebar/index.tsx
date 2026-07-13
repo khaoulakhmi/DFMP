@@ -1,21 +1,23 @@
 import { Box, VStack, Text } from "@chakra-ui/react"
 import { NavLink, useLocation } from "react-router-dom"
-import { navItems } from "@/shared/utils/navigation"
+import { useNavItems } from "@/shared/utils/navigation"
 import { useAuth } from "@/shared/context/useAuth"
-import type { Role } from "@/shared/types/user.type"
 
 const Sidebar = () => {
   const { user } = useAuth()
   const location = useLocation()
 
-  const visibleItems = navItems.filter(item =>
-    item.allowedRoles.includes(user?.role as Role)
-  )
+  const navItems = useNavItems()
+
+  const visibleItems = !user
+    ? navItems.slice(0, 1)
+    : navItems.filter(item => item.allowedRoles.includes(user.role))
 
   const isItemActive = (path: string) => {
     if (path === "/") {
       return location.pathname === "/"
     }
+
     return location.pathname.startsWith(path)
   }
 
@@ -58,17 +60,16 @@ const Sidebar = () => {
                 }}
                 transition="all 0.2s"
               >
-                {/* Icon */}
                 {item.icon && (
-                  <Box fontSize="md">{item.icon}</Box>
+                  <Box fontSize="md">
+                    {item.icon}
+                  </Box>
                 )}
 
-                {/* Label */}
                 <Text fontSize="sm" fontWeight="medium">
                   {item.label}
                 </Text>
 
-                {/* Active indicator */}
                 {active && (
                   <Box
                     position="absolute"

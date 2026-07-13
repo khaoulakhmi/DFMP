@@ -7,7 +7,7 @@ import Input from "@/shared/components/atoms/input"
 import LanguageSwitcher from "@/shared/components/molecules/LanguageSwitcher"
 import { useAuth } from "@/shared/context/useAuth"
 import { useI18n } from "@/shared/i18n/useI18n"
-import { navItems } from "@/shared/utils/navigation"
+import { useNavItems } from "@/shared/utils/navigation"
 
 const getInitials = (name?: string) => {
     if (!name) return "?"
@@ -27,11 +27,13 @@ const Navbar = () => {
     const [search, setSearch] = useState("")
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-    const visibleItems = useMemo(() => {
-        if (!user) return navItems.slice(0, 1)
+    const navItems = useNavItems()
 
-        return navItems.filter(item => item.allowedRoles.includes(user.role))
-    }, [user])
+const visibleItems = useMemo(() => {
+    if (!user) return navItems.slice(0, 1)
+
+    return navItems.filter(item => item.allowedRoles.includes(user.role))
+}, [navItems, user])
 
     const handleSearch = (event: FormEvent<HTMLDivElement>) => {
         event.preventDefault()
