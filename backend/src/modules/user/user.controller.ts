@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { UserService } from "./user.service";
+import { UpdateUserDTO } from "./user.types";
 
 
 
@@ -62,7 +63,8 @@ export const UserController = {
     async updateUser(req: Request, res: Response) {
         try {
             const { id } = req.params as { id: string };
-            const updateData = req.body;
+            const { name, username, role, status } = req.body;
+            const updateData: UpdateUserDTO = { name, username, role, status };
             const updatedUser = await UserService.updateUser(id, updateData);
             res.json(updatedUser);
         } catch (error) {

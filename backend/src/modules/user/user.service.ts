@@ -22,7 +22,14 @@ export const UserService = {
     },
 
     async updateUser (id: string, data: UpdateUserDTO): Promise<PublicUser> {
-        return await prisma.user.update({ where: { id }, data, select: userSelect });
+        const updateData: UpdateUserDTO = {
+            name: data.name,
+            username: data.username,
+            role: data.role,
+            status: data.status,
+        };
+
+        return await prisma.user.update({ where: { id }, data: updateData, select: userSelect });
     },
 
     async deleteUser (id: string): Promise<void> {
