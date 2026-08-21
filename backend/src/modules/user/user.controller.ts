@@ -8,7 +8,6 @@ export const UserController = {
     async getAllUsers(req: Request, res: Response) {
         try {
             const users = await UserService.getAllUsers();
-            console.log(users);
             res.json(users);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -47,13 +46,14 @@ export const UserController = {
     async createUser(req: Request, res: Response) {
         try {
             const userData  = req.body;
-            console.log('Received user data:', userData);
-            console.log('Content-Type:', req.headers['content-type'])
-
             const newUser = await UserService.createUser(userData)
             res.status(201).json(newUser);
         }
-        catch (error) {
+        catch (error: any) {
+                if (error?.code === 'P2002') {
+                    return res.status(409).json({ error: 'Username already exists.' });
+                }
+
                 console.error('Error creating user:', error);
                 res.status(500).json({ error: 'Failed to create user.' });
         }
@@ -85,5 +85,5 @@ export const UserController = {
 
         res.status(500).json({ error: 'Failed to delete user.' });
     }
-}  
-} 
+}
+}

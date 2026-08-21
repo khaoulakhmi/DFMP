@@ -1,5 +1,8 @@
 
 import { Role } from '../../generated/prisma/enums';
+import { User } from '../../generated/prisma/client'
+
+export type PublicUser = Omit<User, 'password'>
 
 // export interface User {
 //     id: string;
@@ -17,13 +20,12 @@ export interface CreateUserDTO {
     username: string;
     password: string;
     role: Role;
+    status?: boolean;
 }
 
 export interface UpdateUserDTO {
     name?: string;
     username?: string;
-    password?: string;
     status?: boolean;
     role?: Role;
 }
-
