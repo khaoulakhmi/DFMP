@@ -18,12 +18,9 @@ export interface AuthTokens {
     refreshToken: string
 }
 
+import { PublicUser } from '../user/user.types'
+
 export interface LoginResponse {
-    user: {
-        id: string
-        username: string
-        name: string
-        role: string
-    }
+    user: PublicUser
     tokens: AuthTokens
 }

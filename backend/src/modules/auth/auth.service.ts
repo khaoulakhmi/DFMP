@@ -2,14 +2,15 @@ import prisma from '../../config/prisma'
 import { comparePassword, hashPassword } from '../../utils/hash'
 import { generateTokens, verifyRefreshToken, getRefreshTokenExpiry } from './auth.utils'
 import { LoginDTO, ResetPasswordDTO, AuthTokens, LoginResponse } from './auth.types'
-import { User } from '../../generated/prisma/client'
+import { userSelect } from '../user/user.select'
 
 export const AuthService = {
 
     async login(data: LoginDTO): Promise<LoginResponse> {
-        // 1. find user
+        // 1. find user (only select password + public fields)
         const user = await prisma.user.findUnique({
-            where: { username: data.username }
+            where: { username: data.username },
+            select: { ...userSelect, password: true }
         })
         if (!user) throw new Error('Invalid credentials')
 
@@ -32,7 +33,14 @@ export const AuthService = {
             }
         })
 
-        return { user, tokens }
+        const { password: _password, ...safeUser } = user
+
+        return {
+            user: safeUser,
+            tokens,
+        }
+
+
     },
 
     async logout(refreshToken: string): Promise<void> {
@@ -46,7 +54,7 @@ export const AuthService = {
         // 1. check token exists in DB
         const stored = await prisma.refreshToken.findUnique({
             where: { token: refreshToken },
-            include: { user: true }
+            include: { user: { select: userSelect } }
         })
         if (!stored) throw new Error('Invalid refresh token')
 
@@ -71,8 +79,8 @@ export const AuthService = {
     },
 
     async resetPassword(userId: string, data: ResetPasswordDTO): Promise<void> {
-        // 1. find user
-        const user = await prisma.user.findUnique({ where: { id: userId } })
+        // 1. find user (select password only for verification)
+        const user = await prisma.user.findUnique({ where: { id: userId }, select: { password: true } })
         if (!user) throw new Error('User not found')
 
         // 2. verify old password
