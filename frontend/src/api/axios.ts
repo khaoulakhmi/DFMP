@@ -1,11 +1,53 @@
 import axios from 'axios'
 
+const apiBaseUrl = import.meta.env.VITE_API_URL
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: apiBaseUrl,
+    withCredentials: true,
     headers: { 'Content-Type': 'application/json' }
 })
 
-// REQUEST interceptor → attach access token to every request
+// Refresh requests use an interceptor-free client to prevent refresh loops.
+const refreshClient = axios.create({
+    baseURL: apiBaseUrl,
+    withCredentials: true,
+    headers: { 'Content-Type': 'application/json' }
+})
+
+let refreshPromise: Promise<string> | null = null
+
+const clearAuthentication = () => {
+    localStorage.removeItem('accessToken')
+    window.dispatchEvent(new Event('auth:logout'))
+}
+
+const refreshAccessToken = () => {
+    if (!refreshPromise) {
+        refreshPromise = (async () => {
+            const { data } = await refreshClient.post<{ accessToken: string }>(
+                '/auth/refresh'
+            )
+
+            if (!data.accessToken) {
+                throw new Error('Refresh response did not include an access token')
+            }
+
+            localStorage.setItem('accessToken', data.accessToken)
+            return data.accessToken
+        })()
+            .catch((error: unknown) => {
+                clearAuthentication()
+                throw error
+            })
+            .finally(() => {
+                refreshPromise = null
+            })
+    }
+
+    return refreshPromise
+}
+
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('accessToken')
     if (token) {
@@ -14,38 +56,23 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// RESPONSE interceptor → handle expired token automatically
 api.interceptors.response.use(
-    (response) => response, // ✅ success → return normally
-
+    (response) => response,
     async (error) => {
         const original = error.config
 
-        // if 401 and not already retried
-        if (error.response?.status === 401 && !original._retry) {
+        const isAuthenticationRequest = ['/auth/login', '/auth/logout', '/auth/refresh']
+            .some(path => original?.url?.endsWith(path))
+
+        if (error.response?.status === 401 && original && !original._retry && !isAuthenticationRequest) {
             original._retry = true
 
             try {
-                const refreshToken = localStorage.getItem('refreshToken')
-                const { data } = await axios.post(
-                    'http://localhost:4000/api/auth/refresh',
-                    { refreshToken }
-                )
-
-                // save new access token
-                localStorage.setItem('accessToken', data.accessToken)
-
-                // retry original request with new token
-                original.headers.Authorization = `Bearer ${data.accessToken}`
+                const accessToken = await refreshAccessToken()
+                original.headers.Authorization = `Bearer ${accessToken}`
                 return api(original)
-
-            } catch (err) {
-                // refresh failed → force logout
-                console.error('Token refresh failed:', err)
-                localStorage.removeItem('accessToken')
-                localStorage.removeItem('refreshToken')
-                window.dispatchEvent(new Event('auth:logout'))
-
+            } catch {
+                return Promise.reject(error)
             }
         }
 

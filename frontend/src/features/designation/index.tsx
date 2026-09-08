@@ -2,14 +2,16 @@ import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNaviga
 import { Box } from "@chakra-ui/react"
 import { Outlet, useLocation } from "react-router-dom"
 import DesignationExplorer from "./components/designationExplorer"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const Designation = () => {
     const location = useLocation()
     const isEditPage = location.pathname.includes("/edit")
+    const { t } = useI18n()
 
     const items = [
-        { label: "Dashboard", href: "/" },
-        { label: "Designations", isCurrentPage: true },
+        { label: t("dashboard"), href: "/" },
+        { label: t("designations"), isCurrentPage: true },
     ]
 
     if (isEditPage) {

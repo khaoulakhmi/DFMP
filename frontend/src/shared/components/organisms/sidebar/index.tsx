@@ -6,6 +6,7 @@ import { useAuth } from "@/shared/context/useAuth"
 const Sidebar = () => {
   const { user } = useAuth()
   const location = useLocation()
+  const navItems = useNavItems()
 
   const navItems = useNavItems()
 

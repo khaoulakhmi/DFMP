@@ -3,9 +3,11 @@ import Typography from "@/shared/components/atoms/typography"
 import Button from "@/shared/components/atoms/button"
 import { useNavigate } from "react-router-dom"
 import { FiArrowLeft } from "react-icons/fi"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const NotFound = () => {
     const navigate = useNavigate()
+    const { t } = useI18n()
 
     return (
         <Box
@@ -32,7 +34,7 @@ const NotFound = () => {
                     fontWeight="semibold"
                     color="neutral.800"
                 >
-                    Page not found
+                    {t("common.notFound")}
                 </Heading>
 
                 {/* Description */}
@@ -41,7 +43,7 @@ const NotFound = () => {
                     color="neutral.600"
                     maxW="400px"
                 >
-                    The page you are looking for doesn’t exist or has been moved.
+                    {t("common.notFoundDescription")}
                 </Typography>
 
                 {/* Action */}
@@ -51,7 +53,7 @@ const NotFound = () => {
                 >
                     <Flex align="center" gap={2}>
                         <FiArrowLeft />
-                        Go Back
+                        {t("common.back")}
                     </Flex>
                 </Button>
 
@@ -60,7 +62,7 @@ const NotFound = () => {
                     variant="ghost"
                     onClick={() => navigate("/")}
                 >
-                    Go to Dashboard
+                    {t("common.goToDashboard")}
                 </Button>
 
             </VStack>

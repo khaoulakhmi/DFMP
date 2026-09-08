@@ -1,11 +1,14 @@
 
 
 
+import { useI18n } from "@/shared/i18n/useI18n"
+
 const FinanceDashboard = () => {
+    const { t } = useI18n()
     return (
         <div>
-            <h1>Finance Dashboard</h1>
-            <p>Welcome, Finance! Here you can view financial data and generate finance reports.</p>
+            <h1>{t("finance")} {t("dashboard")}</h1>
+            <p>{t("common.welcome")}, {t("roles.FINANCE")}!</p>
         </div>
     )
 }

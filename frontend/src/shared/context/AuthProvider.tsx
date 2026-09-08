@@ -14,7 +14,6 @@ type AuthTokenPayload = {
 // helper — checks if token exists AND is not expired
 const isTokenValid = (): boolean => {
     const token = localStorage.getItem('accessToken')
-    console.log('Checking token validity:', token) // debug log
     if (!token) return false
 
     try {
@@ -43,13 +42,10 @@ const getUserFromToken = async (): Promise<User | null> => {
 
         if (decoded.exp <= now) {
             localStorage.removeItem('accessToken')
-            localStorage.removeItem('refreshToken')
             return null
         }
 
-        console.log('Decoded user from token:', decoded) // debug log
         const user = await userApi.getById(decoded.userId) // 👈 fetch full user data if needed
-        console.log('Fetched user data:', user) // debug log
         return user // 👈 return the fetched user data
     } catch {
         localStorage.removeItem('accessToken')
@@ -67,15 +63,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         fetchUser()
+
+        const handleLogout = () => setUser(null)
+        window.addEventListener('auth:logout', handleLogout)
+        return () => window.removeEventListener('auth:logout', handleLogout)
     }, [])
-    
-    console.log('AuthProvider rendered, user:', user) // debug log
-    console.log('Is token valid?', isTokenValid()) // debug log
+
     const isAuthenticated = isTokenValid() // 👈 replaced
 
     const login = async (username: string, password: string) => {
         const data = await authApi.login(username, password)
-        console.log('Login successful, user data:', data) // debug log
         setUser(data.user) // 👈 updated to use data.user
     }
 
@@ -83,7 +80,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await authApi.logout()
         setUser(null)
         localStorage.removeItem('accessToken')  // 👈 added
-        localStorage.removeItem('refreshToken') // 👈 added
     }
 
     return (

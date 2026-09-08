@@ -7,13 +7,14 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/shared/context/useAuth"
 import { FiEye, FiEyeOff, FiLock, FiLogIn, FiUser } from "react-icons/fi"
 import logo from "@/assets/logo2.png"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 type FormValues = {
     username: string
     password: string
 }
 
-const getLoginErrorMessage = (error: unknown) => {
+const getLoginErrorMessage = (error: unknown, fallback: string) => {
     if (
         typeof error === "object" &&
         error !== null &&
@@ -33,12 +34,13 @@ const getLoginErrorMessage = (error: unknown) => {
         return error.message
     }
 
-    return "Login failed. Please check your credentials and try again."
+    return fallback
 }
 
 const LoginForm = () => {
     const navigate = useNavigate()
     const { login } = useAuth()
+    const { t } = useI18n()
     const [showPassword, setShowPassword] = useState(false)
 
     const {
@@ -56,7 +58,7 @@ const LoginForm = () => {
             navigate("/")
         } catch (err) {
             setError("root", {
-                message: getLoginErrorMessage(err),
+                message: getLoginErrorMessage(err, t("auth.loginFailed")),
             })
         }
     }
@@ -101,25 +103,25 @@ const LoginForm = () => {
                                 DFMP
                             </Text>
                             <Text fontSize="xs" color="primary.600" fontWeight="semibold" mt={1}>
-                                Management Platform
+                                {t("auth.platform")}
                             </Text>
                         </Box>
                     </HStack>
 
                     <Box textAlign="center" pt={2}>
                         <Heading size="lg" color="neutral.900" fontWeight="semibold">
-                            Welcome back
+                            {t("auth.welcomeBack")}
                         </Heading>
                         <Text fontSize="sm" color="neutral.500">
-                            Sign in to continue to DFMP
+                            {t("auth.signInDescription")}
                         </Text>
                     </Box>
                 </VStack>
 
                 <VStack gap={4} align="stretch">
                     <TextField
-                        label="Username"
-                        placeholder="Enter your username"
+                        label={t("users.username")}
+                        placeholder={t("auth.usernamePlaceholder")}
                         autoComplete="username"
                         error={errors.username?.message}
                         state={errors.username ? "error" : "default"}
@@ -128,13 +130,13 @@ const LoginForm = () => {
                         showRequiredIndicator
                         disabled={isSubmitting}
                         {...register("username", {
-                            required: "Username is required",
+                            required: t("auth.usernameRequired"),
                             setValueAs: value => typeof value === "string" ? value.trim() : value,
                         })}
                     />
                     <TextField
-                        label="Password"
-                        placeholder="Enter your password"
+                        label={t("users.password")}
+                        placeholder={t("auth.passwordPlaceholder")}
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         error={errors.password?.message}
@@ -153,7 +155,7 @@ const LoginForm = () => {
                                     cursor: "pointer",
                                 }}
                                 onClick={() => setShowPassword(value => !value)}
-                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                             >
                                 {showPassword ? <FiEyeOff /> : <FiEye />}
                             </button>
@@ -162,10 +164,10 @@ const LoginForm = () => {
                         showRequiredIndicator
                         disabled={isSubmitting}
                         {...register("password", {
-                            required: "Password is required",
+                            required: t("auth.passwordRequired"),
                             minLength: {
                                 value: 4,
-                                message: "Password must be at least 4 characters",
+                                message: t("auth.passwordMinLength"),
                             },
                         })}
                     />
@@ -180,7 +182,7 @@ const LoginForm = () => {
                 <Button type="submit" variant="primary" size="lg" disabled={isSubmitting}>
                     <HStack gap={2} justify="center">
                         <FiLogIn />
-                        <Text as="span">{isSubmitting ? "Signing in..." : "Sign in"}</Text>
+                        <Text as="span">{isSubmitting ? t("common.signingIn") : t("common.login")}</Text>
                     </HStack>
                 </Button>
             </VStack>

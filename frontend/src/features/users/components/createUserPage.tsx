@@ -8,6 +8,7 @@ import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 interface CreateUserPageProps {
     onCancel?: () => void;
@@ -26,6 +27,8 @@ const CreateUserPage = ({
         formState: { errors, isSubmitting }
     } = useForm<CreateUserDTO>()
 
+    const { t } = useI18n()
+    
     const navigate = useNavigate()
 
     const handleCancel = () => {
@@ -43,8 +46,8 @@ const CreateUserPage = ({
         if (!user) return
 
         toaster.create({
-            title: "User created",
-            description: `${user.name} has been created successfully.`,
+            title: t("users.created"),
+            description: `${user.name} ${t("users.successAdd")}`,
             type: "success",
         })
 
@@ -66,15 +69,15 @@ const CreateUserPage = ({
                             size="sm"
                             onClick={handleCancel}
                         >
-                            Back
+                            {t("common.back")}
                         </Button>
                     </Box>
                     <Box mb={6}>
                         <Typography variant="heading">
-                            Create User
+                            {t("users.add")}
                         </Typography>
                         <Typography variant="body-sm" color="text.secondary">
-                            Add a new user to the system
+                            {t("users.addDescription")}
                         </Typography>
                     </Box>
                 </Flex>
@@ -102,7 +105,7 @@ const CreateUserPage = ({
                         fontWeight="medium"
                         color="neutral.700"
                     >
-                        User Information
+                        {t("users.information")}
                     </Text>
                 </Box>
 
@@ -110,49 +113,49 @@ const CreateUserPage = ({
                     <VStack gap={5} align="stretch">
                         <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                             <TextField
-                                label="Full Name"
-                                placeholder="Enter full name"
+                                label={t("common.name")}
+                                placeholder={t("users.fullNamePlaceholder")}
                                 error={errors.name?.message}
                                 {...register("name", {
-                                    required: "Name is required"
+                                    required: t("validation.required", { field: t("common.name") })
                                 })}
                             />
                             <TextField
-                                label="Username"
-                                placeholder="Enter username"
+                                label={t("users.username")}
+                                placeholder={t("users.usernamePlaceholder")}
                                 error={errors.username?.message}
                                 {...register("username", {
-                                    required: "Username is required"
+                                    required: t("validation.required", { field: t("users.username") })
                                 })}
                             />
                         </SimpleGrid>
 
                         <TextField
-                            label="Password"
-                            placeholder="Min. 6 characters"
+                            label={t("users.password")}
+                            placeholder={t("users.passwordMinLength")}
                             type="password"
                             error={errors.password?.message}
                             {...register("password", {
-                                required: "Password is required",
+                                required: t("validation.required", { field: t("users.password") }),
                                 minLength: {
                                     value: 6,
-                                    message: "Password must be at least 6 characters"
+                                    message: t("users.passwordTooShort")
                                 }
                             })}
                         />
 
                         <SelectField
-                            label="Role"
+                            label={t("users.role")}
                             leftIcon={null}
                             {...register("role", {
-                                required: "Role is required"
+                                required: t("validation.required", { field: t("users.role") })
                             })}
                         >
-                            <option value="">Select a role</option>
-                            <option value="ADMIN">Admin</option>
-                            <option value="SALES">Sales</option>
-                            <option value="FINANCE">Finance</option>
-                            <option value="ACCOUNTANT">Accountant</option>
+                            <option value="">{t("common.selectRole")}</option>
+                            <option value="ADMIN">{t("roles.ADMIN")}</option>
+                            <option value="SALES">{t("roles.SALES")}</option>
+                            <option value="FINANCE">{t("roles.FINANCE")}</option>
+                            <option value="ACCOUNTANT">{t("roles.ACCOUNTANT")}</option>
                         </SelectField>
                     </VStack>
                 </Box>
@@ -174,7 +177,7 @@ const CreateUserPage = ({
                             type="button"
                             onClick={handleCancel}
                         >
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                     </Box>
                     <Box w="32">
@@ -184,7 +187,7 @@ const CreateUserPage = ({
                             type="submit"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? "Creating..." : "Create User"}
+                            {isSubmitting ? t("users.creating") : t("users.create")}
                         </Button>
                     </Box>
                 </Box>

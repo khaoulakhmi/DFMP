@@ -26,6 +26,7 @@ const Navbar = () => {
     const location = useLocation()
     const [search, setSearch] = useState("")
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const navItems = useNavItems()
 
     const navItems = useNavItems()
 

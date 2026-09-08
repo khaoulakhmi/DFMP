@@ -2,6 +2,8 @@ import jwt, { SignOptions } from 'jsonwebtoken'
 import { TokenPayload, AuthTokens } from './auth.types'
 import { env } from '../../config/env';
 
+export const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+
 export const generateTokens = (payload: TokenPayload): AuthTokens => {
 
     const accessToken = jwt.sign(
@@ -34,7 +36,5 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
 }
 
 export const getRefreshTokenExpiry = (): Date => {
-    const date = new Date()
-    date.setDate(date.getDate() + 7) // 7 days from now
-    return date
+    return new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS)
 }

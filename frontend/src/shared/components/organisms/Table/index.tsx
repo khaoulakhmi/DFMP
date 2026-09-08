@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react"
 import { Box, Flex, Spinner, Text } from "@chakra-ui/react"
+import { useI18n } from "@/shared/i18n/useI18n"
 import TableToolbar    from "./TableToolBar"
 import TableHead       from "./TableHead"
 import TableBody       from "./TableBody"
@@ -20,6 +21,7 @@ const Table = <T extends Record<string, unknown>>({
     onEdit,
     
 }: TableProps<T>) => {
+    const { t } = useI18n()
 
     const [search,      setSearch]      = useState("")
     const [sortKey,     setSortKey]     = useState<string | null>(null)
@@ -108,7 +110,7 @@ const Table = <T extends Record<string, unknown>>({
         <Flex justify="center" align="center" h="48" bg="white" borderRadius="xl" border="1px solid" borderColor="neutral.200">
             <Flex direction="column" align="center" gap={3}>
                 <Spinner color="primary.500" size="md" />
-                <Text fontSize="sm" color="neutral.500">Loading data...</Text>
+                <Text fontSize="sm" color="neutral.500">{t("common.loadingData")}</Text>
             </Flex>
         </Flex>
     )
@@ -117,7 +119,7 @@ const Table = <T extends Record<string, unknown>>({
     if (isError) return (
         <Box p={6} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl">
             <Text color="error.600" fontSize="sm" fontWeight="medium">
-                Failed to load data. Please try again.
+                {t("common.failedToLoad")}
             </Text>
         </Box>
     )

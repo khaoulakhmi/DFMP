@@ -2,11 +2,14 @@
 
 
 
+import { useI18n } from "@/shared/i18n/useI18n"
+
 const SalesDashboard = () => {
+    const { t } = useI18n()
     return (
         <div>
-            <h1>Sales Dashboard</h1>
-            <p>Welcome, Sales! Here you can view sales data and generate sales reports.</p>
+            <h1>{t("sales")} {t("dashboard")}</h1>
+            <p>{t("common.welcome")}, {t("roles.SALES")}!</p>
         </div>
     )
 }

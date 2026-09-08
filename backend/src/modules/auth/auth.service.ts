@@ -1,12 +1,12 @@
 import prisma from '../../config/prisma'
 import { comparePassword, hashPassword } from '../../utils/hash'
 import { generateTokens, verifyRefreshToken, getRefreshTokenExpiry } from './auth.utils'
-import { LoginDTO, ResetPasswordDTO, AuthTokens, LoginResponse } from './auth.types'
+import { LoginDTO, ResetPasswordDTO, LoginServiceResult } from './auth.types'
 import { userSelect } from '../user/user.select'
 
 export const AuthService = {
 
-    async login(data: LoginDTO): Promise<LoginResponse> {
+    async login(data: LoginDTO): Promise<LoginServiceResult> {
         // 1. find user (only select password + public fields)
         const user = await prisma.user.findUnique({
             where: { username: data.username },

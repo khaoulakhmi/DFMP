@@ -3,16 +3,18 @@ import AdminDashboard from './AdminDashboard'
 import SalesDashboard from './SalesDashboard'
 import FinanceDashboard from './FinanceDashboard'
 import AccountantDashboard from './AccountantDashboard'
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const DashboardRouter = () => {
     const { user } = useAuth()
+    const { t } = useI18n()
 
     switch (user?.role) {
         case 'ADMIN':       return <AdminDashboard />
         case 'SALES':       return <SalesDashboard />
         case 'FINANCE':     return <FinanceDashboard />
         case 'ACCOUNTANT':  return <AccountantDashboard />
-        default:            return <div>Unknown role</div>
+        default:            return <div>{t("common.unknownRole")}</div>
     }
 }
 

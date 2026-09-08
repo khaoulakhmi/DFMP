@@ -2,6 +2,7 @@ import { Box, Flex, HStack, Text } from "@chakra-ui/react"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import Button from "@/shared/components/atoms/button"
 import type { TableAction } from "@/shared/types/table.types"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 // TableToolbar.tsx
 interface TableToolbarProps<T> {
@@ -25,6 +26,7 @@ const TableToolbar = <T extends Record<string, unknown>>({
     onClearSelect,
     onChange,
 }: TableToolbarProps<T>) => {
+    const { t } = useI18n()
     const hasSelection = selectedRows.length > 0
 
     return (
@@ -62,13 +64,13 @@ const TableToolbar = <T extends Record<string, unknown>>({
                             ✕
                         </Box>
                         <Text fontSize="sm" fontWeight="medium" color="primary.700">
-                            {selectedRows.length} selected
+                            {selectedRows.length} {t("common.selected")}
                         </Text>
                     </>
                 ) : (
                     <Text fontSize="sm" fontWeight="medium" color="neutral.600">
-                        {total} {total === 1 ? "record" : "records"}
-                        {search && ` matching "${search}"`}
+                        {total} {t(total === 1 ? "common.record" : "common.records")}
+                        {search && ` ${t("common.matching", { search })}`}
                     </Text>
                 )}
             </HStack>
@@ -87,7 +89,7 @@ const TableToolbar = <T extends Record<string, unknown>>({
                                     if (row) onEdit(row)
                                 }}
                             >
-                                ✏️ Edit
+                                ✏️ {t("common.edit")}
                             </Button>
                         </Box>
                     )}
@@ -112,7 +114,7 @@ const TableToolbar = <T extends Record<string, unknown>>({
                 searchable && (
                     <Box w={{ base: "full", sm: "64" }}>
                         <TextField
-                            placeholder="Search..."
+                            placeholder={t("common.searchPlaceholder")}
                             value={search}
                             onChange={onChange}
                         />

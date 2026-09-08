@@ -22,5 +22,10 @@ import { PublicUser } from '../user/user.types'
 
 export interface LoginResponse {
     user: PublicUser
+    tokens: Pick<AuthTokens, 'accessToken'>
+}
+
+export interface LoginServiceResult {
+    user: PublicUser
     tokens: AuthTokens
 }

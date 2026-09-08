@@ -4,17 +4,17 @@ export const authApi = {
 
     login: async (username: string, password: string) => {
         const { data } = await api.post('/auth/login', { username, password })
-        // save tokens
         localStorage.setItem('accessToken', data.tokens.accessToken)
-        localStorage.setItem('refreshToken', data.tokens.refreshToken)
         return data
     },
 
     logout: async () => {
-        const refreshToken = localStorage.getItem('refreshToken')
-        await api.post('/auth/logout', { refreshToken })
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
+        try {
+            await api.post('/auth/logout')
+        } finally {
+            localStorage.removeItem('accessToken')
+            window.dispatchEvent(new Event('auth:logout'))
+        }
     },
 
     resetPassword: async (oldPassword: string, newPassword: string) => {
