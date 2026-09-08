@@ -28,11 +28,13 @@ const Navbar = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false)
     const navItems = useNavItems()
 
-    const visibleItems = useMemo(() => {
-        if (!user) return navItems.slice(0, 1)
+    const navItems = useNavItems()
 
-        return navItems.filter(item => item.allowedRoles.includes(user.role))
-    }, [user, navItems])
+const visibleItems = useMemo(() => {
+    if (!user) return navItems.slice(0, 1)
+
+    return navItems.filter(item => item.allowedRoles.includes(user.role))
+}, [navItems, user])
 
     const handleSearch = (event: FormEvent<HTMLDivElement>) => {
         event.preventDefault()
