@@ -10,6 +10,7 @@ import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNaviga
 import { userApi } from "@/api/user.api"
 import type { UpdateUserDTO } from "@/shared/types/user.type"
 import Switch from "@/shared/components/atoms/switch"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const EditUserPage = () => {
     const { id }         = useParams<{ id: string }>()
@@ -24,6 +25,8 @@ const EditUserPage = () => {
         control,
         formState: { errors, isSubmitting }
     } = useForm<UpdateUserDTO>()
+
+    const { t } = useI18n()
 
     // ── Fetch current user data ──
     const { data: user, isLoading, isError } = useQuery({
@@ -78,7 +81,7 @@ const EditUserPage = () => {
     if (isError || !user) return (
         <Box p={6} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl" maxW="700px">
             <Text color="error.600" fontSize="sm" fontWeight="medium">
-                User not found or failed to load.
+                {t("users.notFound")}
             </Text>
         </Box>
     )
@@ -88,9 +91,9 @@ const EditUserPage = () => {
             <BreadcrumbNavigation
                 mb={4}
                 items={[
-                    { label: "Dashboard", href: "/" },
-                    { label: "Users", href: "/users" },
-                    { label: "Edit User", isCurrentPage: true },
+                    { label: t("dashboard"), href: "/" },
+                    { label: t("users"), href: "/users" },
+                    { label: t("users.edit"), isCurrentPage: true },
                 ]}
             />
 
@@ -102,7 +105,7 @@ const EditUserPage = () => {
                         size="sm"
                         onClick={() => navigate("/users")}
                     >
-                        Back
+                        {t("common.back")}
                     </Button>
                 </Box>
                 <Box>
@@ -112,10 +115,10 @@ const EditUserPage = () => {
                         color="neutral.900"
                         fontFamily="heading"
                     >
-                        Edit User
+                        {t("users.edit")}
                     </Heading>
                     <Text fontSize="sm" color="neutral.600" mt={1}>
-                        Editing <strong>{user.name}</strong>
+                        {t("users.editing", { name: user.name })}
                     </Text>
                 </Box>
 
@@ -126,12 +129,12 @@ const EditUserPage = () => {
                         size="md"
                         disabled={deleteMutation.isPending}
                         onClick={() => {
-                            if (window.confirm(`Delete ${user.name}? This cannot be undone.`)) {
+                            if (window.confirm(t("users.confirmDeleteNamed", { name: user.name }))) {
                                 deleteMutation.mutate()
                             }
                         }}
                     >
-                        {deleteMutation.isPending ? "Deleting..." : "Delete User"}
+                        {deleteMutation.isPending ? t("users.deleting") : t("users.delete")}
                     </Button>
                 </Box>
             </Flex>
@@ -157,7 +160,7 @@ const EditUserPage = () => {
                     borderColor="neutral.200"
                 >
                     <Text fontSize="sm" fontWeight="medium" color="neutral.700">
-                        User Information
+                        {t("users.information")}
                     </Text>
                 </Box>
 
@@ -168,19 +171,19 @@ const EditUserPage = () => {
                         {/* Name + Username */}
                         <SimpleGrid columns={2} gap={4}>
                             <TextField
-                                label="Full Name"
-                                placeholder="Enter full name"
+                                label={t("common.name")}
+                                placeholder={t("users.fullNamePlaceholder")}
                                 error={errors.name?.message}
                                 {...register("name", {
-                                    required: "Name is required"
+                                    required: t("validation.required", { field: t("common.name") })
                                 })}
                             />
                             <TextField
-                                label="Username"
-                                placeholder="Enter username"
+                                label={t("users.username")}
+                                placeholder={t("users.usernamePlaceholder")}
                                 error={errors.username?.message}
                                 {...register("username", {
-                                    required: "Username is required"
+                                    required: t("validation.required", { field: t("users.username") })
                                 })}
                             />
                         </SimpleGrid>
@@ -188,20 +191,20 @@ const EditUserPage = () => {
                        {/* Role + Status */}
                         <SimpleGrid columns={2} gap={4}>
                             <SelectField
-                                label="Role"
+                                label={t("users.role")}
                                 leftIcon={null}
                                 {...register("role")}
                             >
-                                <option value="ADMIN">Admin</option>
-                                <option value="SALES">Sales</option>
-                                <option value="FINANCE">Finance</option>
-                                <option value="ACCOUNTANT">Accountant</option>
+                                <option value="ADMIN">{t("roles.ADMIN")}</option>
+                                <option value="SALES">{t("roles.SALES")}</option>
+                                <option value="FINANCE">{t("roles.FINANCE")}</option>
+                                <option value="ACCOUNTANT">{t("roles.ACCOUNTANT")}</option>
                             </SelectField>
 
                             {/* 👇 wrap Switch to match SelectField height/label */}
                             <Box>
                                 <Text fontSize="sm" fontWeight="medium" color="neutral.700" mb={2}>
-                                    Status
+                                    {t("common.status")}
                                 </Text>
                                 <Box
                                     h="10"
@@ -218,7 +221,7 @@ const EditUserPage = () => {
                                         control={control}
                                         render={({ field }) => (
                                             <Switch
-                                                label={field.value ? "Active" : "Inactive"}
+                                                label={field.value ? t("common.active") : t("common.inactive")}
                                                 checked={field.value}
                                                 onChange={field.onChange}
                                             />
@@ -237,20 +240,20 @@ const EditUserPage = () => {
                             borderColor="neutral.200"
                         >
                             <Text fontSize="sm" fontWeight="medium" color="neutral.700" mb={3}>
-                                Change Password
+                                {t("users.changePassword")}
                                 <Text as="span" fontSize="xs" color="neutral.400" fontWeight="normal" ml={2}>
-                                    (leave blank to keep current)
+                                    {t("users.leaveBlank")}
                                 </Text>
                             </Text>
                             <TextField
-                                label="New Password"
-                                placeholder="Min. 6 characters"
+                                label={t("users.password")}
+                                placeholder={t("users.passwordPlaceholder")}
                                 type="password"
                                 error={errors.password?.message}
                                 {...register("password", {
                                     minLength: {
                                         value:   6,
-                                        message: "Password must be at least 6 characters"
+                                        message: t("users.passwordTooShort")
                                     }
                                 })}
                             />
@@ -266,7 +269,7 @@ const EditUserPage = () => {
                                 borderRadius="md"
                             >
                                 <Text color="error.600" fontSize="sm">
-                                    Failed to update user. Please try again.
+                                    {t("users.errorEdit")}
                                 </Text>
                             </Box>
                         )}
@@ -286,7 +289,7 @@ const EditUserPage = () => {
                 >
                     {/* Last updated */}
                     <Text fontSize="xs" color="neutral.400">
-                        Last updated: {new Date(user.updatedAt).toLocaleDateString()}
+                        {t("common.lastUpdated", { date: new Date(user.updatedAt).toLocaleDateString() })}
                     </Text>
 
                     <Flex gap={3}>
@@ -297,7 +300,7 @@ const EditUserPage = () => {
                                 type="button"
                                 onClick={() => navigate("/users")}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                         </Box>
                         <Box w="30">
@@ -307,7 +310,7 @@ const EditUserPage = () => {
                                 type="submit"
                                 disabled={isSubmitting || updateMutation.isPending}
                             >
-                                {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                                {updateMutation.isPending ? t("users.updating") : t("users.saveChanges")}
                             </Button>
                         </Box>
                     </Flex>

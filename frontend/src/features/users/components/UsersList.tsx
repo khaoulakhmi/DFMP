@@ -7,6 +7,7 @@ import type { User } from "@/shared/types/user.type"
 import { Box, Text } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 
 
@@ -15,10 +16,11 @@ const UsersList = () => {
     const [users, setUsers] = useState([])
     // const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
+    const { t } = useI18n()
      const columns = [
         {
             key:      "name",
-            label:    "Name",
+            label:    t("table.name"),
             sortable: true,
             render:   (value: unknown) => (
                 <Box display="flex" alignItems="center" gap={2}>
@@ -44,7 +46,7 @@ const UsersList = () => {
         },
         {
             key:      "username",
-            label:    "Username",
+            label:    t("table.username"),
             sortable: true,
             render:   (value: unknown) => (
                 <Text fontSize="sm" color="neutral.500">
@@ -54,14 +56,14 @@ const UsersList = () => {
         },
         {
             key:    "role",
-            label:  "Role",
+            label:  t("table.role"),
             render: (value: unknown) => (
                 <RoleBadge value={String(value)} />   // 👈 role badge with icon
             )
         },
         {
             key:    "status",
-            label:  "Status",
+            label:  t("table.status"),
             render: (value: unknown) => (
                 <StatusBadge value={value as boolean} /> // 👈 neutral badge with colored dot
             )
@@ -106,7 +108,7 @@ const UsersList = () => {
                 </Box>
             ) : 
             (
-                <Typography variant={"body"}>No users fetched yet.</Typography>
+                <Typography variant={"body"}>{t("users.noUsers")}</Typography>
             )}
             
         </Box>
