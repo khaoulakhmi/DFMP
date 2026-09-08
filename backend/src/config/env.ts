@@ -3,7 +3,8 @@ const requiredEnvVars = [
     'ACCESS_TOKEN_SECRET',
     'REFRESH_TOKEN_SECRET',
     'ACCESS_TOKEN_EXPIRES_IN',
-    'REFRESH_TOKEN_EXPIRES_IN'
+    'REFRESH_TOKEN_EXPIRES_IN',
+    'FRONTEND_URL'
 ] as const
 
 for (const key of requiredEnvVars) {
@@ -18,4 +19,6 @@ export const env = {
     refreshTokenSecret:     process.env.REFRESH_TOKEN_SECRET!,
     accessTokenExpiresIn:   process.env.ACCESS_TOKEN_EXPIRES_IN!,
     refreshTokenExpiresIn:  process.env.REFRESH_TOKEN_EXPIRES_IN!,
+    frontendUrl:             process.env.FRONTEND_URL!,
+    nodeEnv:                 process.env.NODE_ENV ?? 'development',
 }
