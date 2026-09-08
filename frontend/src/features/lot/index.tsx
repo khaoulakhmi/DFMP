@@ -9,8 +9,10 @@ import CreateLotModal from "./components/createLotModal"
 import { useQuery } from "@tanstack/react-query"
 import type { Designation } from "@/shared/types/designation.types"
 import { designationApi } from "@/api/designation.api"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const Lot = () => {
+    const { t } = useI18n()
 
     const [createLotOpen, SetCreateLotOpen] = useState(false)
     const {data: designations = [] as Designation[]} = useQuery({
@@ -22,8 +24,8 @@ const Lot = () => {
             <BreadcrumbNavigation
                 mb={4}
                 items={[
-                    { label: "Dashboard", href: "/" },
-                    { label: "Lots", isCurrentPage: true },
+                    { label: t("dashboard"), href: "/" },
+                    { label: t("lots"), isCurrentPage: true },
                 ]}
             />
 
@@ -34,12 +36,12 @@ const Lot = () => {
                 gap={3}
             >
                 <Box>
-                    <Text fontSize="lg" fontWeight="semibold" color="neutral.900">Lots</Text>
-                    <Text fontSize="sm" color="neutral.500">Browse catalog lots.</Text>
+                    <Text fontSize="lg" fontWeight="semibold" color="neutral.900">{t("lots.title")}</Text>
+                    <Text fontSize="sm" color="neutral.500">{t("lots.description")}</Text>
                 </Box>
                 <Box w={{ base: "full", sm: "44" }}>
                     <Button onClick={() => SetCreateLotOpen(true)} w="full" colorScheme="blue">
-                        <HStack justify="center" gap={2}><FiPlus /><Text>Add Lot</Text></HStack>
+                        <HStack justify="center" gap={2}><FiPlus /><Text>{t("lots.add")}</Text></HStack>
                     </Button>
                 </Box>
             </Flex>

@@ -15,12 +15,12 @@ const Provider = () => {
     const breadcrumbItems =
         activeTab === "create"
             ? [
-                { label: "Dashboard", href: "/" },
+                { label: t("dashboard"), href: "/" },
                 { label: t("providers"), href: "/providers" },
                 { label: t("providers.add"), isCurrentPage: true },
             ]
             : [
-                { label: "Dashboard", href: "/" },
+                { label: t("dashboard"), href: "/" },
                 { label: t("providers"), isCurrentPage: true },
             ]
 

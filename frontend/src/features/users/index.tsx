@@ -7,22 +7,23 @@ import { IoMdPersonAdd } from "react-icons/io";
 import CreateUserPage from "./components/createUserPage";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-
+import { useI18n } from "@/shared/i18n/useI18n";
 
 const UsersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const [listVersion, setListVersion] = useState(0)
+    const { t } = useI18n()
     const activeTab = searchParams.get("tab") === "create" ? "create" : "all"
     const breadcrumbItems =
         activeTab === "create"
             ? [
-                { label: "Dashboard", href: "/" },
-                { label: "Users", href: "/users" },
-                { label: "Create User", isCurrentPage: true },
+                { label: t("dashboard"), href: "/" },
+                { label: t("users"), href: "/users" },
+                { label: t("users.add"), isCurrentPage: true },
             ]
             : [
-                { label: "Dashboard", href: "/" },
-                { label: "Users", isCurrentPage: true },
+                { label: t("dashboard"), href: "/" },
+                { label: t("users"), isCurrentPage: true },
             ]
 
     const showUsersList = () => {
@@ -32,13 +33,13 @@ const UsersPage = () => {
     const options = [
         {
             icon: <FaUsers />,
-            label: "All Users",
+            label: t("users.list"),
             value: "all",
             content: <UsersList key={listVersion} />
         },
         {
             icon: <IoMdPersonAdd />,
-            label: "Create New User",
+            label: t("users.add"),
             value: "create",
             content: (
                 <CreateUserPage

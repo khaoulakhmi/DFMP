@@ -4,8 +4,10 @@ import { Box, Flex, HStack, Text } from "@chakra-ui/react"
 import { FiPlus } from "react-icons/fi"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import SpecificationList from "./components/SpecificationList"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 const Specifications = () => {
+    const { t } = useI18n()
     const navigate = useNavigate()
     const location = useLocation()
     const isNestedPage = location.pathname !== "/specifications"
@@ -19,8 +21,8 @@ const Specifications = () => {
             <BreadcrumbNavigation
                 mb={4}
                 items={[
-                    { label: "Dashboard", href: "/" },
-                    { label: "Specifications", isCurrentPage: true },
+                    { label: t("dashboard"), href: "/" },
+                    { label: t("specifications"), isCurrentPage: true },
                 ]}
             />
 
@@ -32,12 +34,12 @@ const Specifications = () => {
                 mb={5}
             >
                 <Box>
-                    <Text fontSize="lg" fontWeight="semibold" color="neutral.900">Cahiers de charge</Text>
-                    <Text fontSize="sm" color="neutral.500">Suivi des specifications, visas, publications et appels d'offres.</Text>
+                    <Text fontSize="lg" fontWeight="semibold" color="neutral.900">{t("specifications.title")}</Text>
+                    <Text fontSize="sm" color="neutral.500">{t("specifications.description")}</Text>
                 </Box>
                 <Box w={{ base: "full", sm: "56" }}>
                     <Button onClick={() => navigate("/specifications/create")}>
-                        <HStack justify="center" gap={2}><FiPlus /><Text>Add specification</Text></HStack>
+                        <HStack justify="center" gap={2}><FiPlus /><Text>{t("specifications.add")}</Text></HStack>
                     </Button>
                 </Box>
             </Flex>
