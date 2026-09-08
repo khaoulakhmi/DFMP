@@ -1,12 +1,13 @@
 import { Box, VStack, Text } from "@chakra-ui/react"
 import { NavLink, useLocation } from "react-router-dom"
-import { navItems } from "@/shared/utils/navigation"
+import { useNavItems } from "@/shared/utils/navigation"
 import { useAuth } from "@/shared/context/useAuth"
 import type { Role } from "@/shared/types/user.type"
 
 const Sidebar = () => {
   const { user } = useAuth()
   const location = useLocation()
+  const navItems = useNavItems()
 
   const visibleItems = navItems.filter(item =>
     item.allowedRoles.includes(user?.role as Role)
