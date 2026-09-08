@@ -1,5 +1,6 @@
 import { Box, Flex, HStack, Text } from "@chakra-ui/react"
 import Button from "@/shared/components/atoms/button"
+import { useI18n } from "@/shared/i18n/useI18n"
 
 interface TablePaginationProps {
     page:       number
@@ -16,6 +17,7 @@ const TablePagination = ({
     onNext,
     onPage
 }: TablePaginationProps) => {
+    const { t } = useI18n()
     const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
         .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
         .reduce<(number | string)[]>((acc, p, i, arr) => {
@@ -36,7 +38,7 @@ const TablePagination = ({
             gap={3}
         >
             <Text fontSize="sm" color="neutral.500">
-                Page {page} of {totalPages}
+                {t("common.pageOf", { page, total: totalPages })}
             </Text>
 
             <HStack gap={2} overflowX="auto" pb={{ base: 1, sm: 0 }}>
@@ -47,7 +49,7 @@ const TablePagination = ({
                         disabled={page === 1}
                         onClick={onPrev}
                     >
-                        ← Previous
+                        ← {t("common.previous")}
                     </Button>
                 </Box>
 
@@ -87,7 +89,7 @@ const TablePagination = ({
                         disabled={page === totalPages}
                         onClick={onNext}
                     >
-                        Next →
+                        {t("common.next")} →
                     </Button>
                 </Box>
             </HStack>
