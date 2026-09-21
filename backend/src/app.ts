@@ -16,6 +16,17 @@ app.use(cors({
   origin: env.frontendUrl,
   credentials: true,
 }));
+// Cookie authentication requires rejecting mutations from untrusted origins.
+app.use((req, res, next) => {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    const origin = req.get('Origin');
+    if ((origin && origin !== new URL(env.frontendUrl).origin) ||
+        req.get('Sec-Fetch-Site') === 'cross-site') {
+      return res.status(403).json({ error: 'Untrusted request origin' });
+    }
+  }
+  next();
+});
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

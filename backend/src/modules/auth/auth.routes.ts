@@ -6,6 +6,8 @@ import { loginSchema, resetPasswordSchema } from './auth.validation'
 
 const authRouter = Router()
 
+authRouter.get('/me', authenticate, AuthController.me)
+
 authRouter.post('/login',          validate(loginSchema),        AuthController.login)
 authRouter.post('/logout',                                      AuthController.logout)
 authRouter.post('/refresh',                                     AuthController.refresh)

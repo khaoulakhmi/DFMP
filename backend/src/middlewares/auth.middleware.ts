@@ -12,12 +12,11 @@ declare global {
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
     try {
-        const authHeader = req.headers.authorization
-        if (!authHeader?.startsWith('Bearer ')) {
+        const token = req.cookies?.accessToken
+        if (typeof token !== 'string' || !token) {
             return res.status(401).json({ error: 'No token provided' })
         }
 
-        const token = authHeader.split(' ')[1]
         const payload = verifyAccessToken(token)
 
         req.user = { id: payload.userId, role: payload.role }

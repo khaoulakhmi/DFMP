@@ -3,6 +3,9 @@ import { AuthService } from './auth.service'
 import { hasErrorMessage } from '../../utils/error'
 import { env } from '../../config/env'
 import { REFRESH_TOKEN_MAX_AGE_MS } from './auth.utils'
+import jwt from 'jsonwebtoken'
+import prisma from '../../config/prisma'
+import { userSelect } from '../user/user.select'
 
 const refreshTokenCookieOptions: CookieOptions = {
     httpOnly: true,
@@ -11,17 +14,47 @@ const refreshTokenCookieOptions: CookieOptions = {
     path: '/api/auth',
 }
 
+const accessTokenCookieOptions: CookieOptions = {
+    httpOnly: true,
+    secure: env.nodeEnv === 'production',
+    sameSite: 'lax',
+    path: '/api',
+}
+
+const setAccessTokenCookie = (res: Response, token: string) => {
+    const payload = jwt.decode(token) as jwt.JwtPayload
+    res.cookie('accessToken', token, {
+        ...accessTokenCookieOptions,
+        expires: new Date(payload.exp! * 1000),
+    })
+}
+
 export const AuthController = {
+
+    async me(req: Request, res: Response) {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: req.user.id },
+                select: userSelect,
+            })
+            if (!user || !user.status) {
+                return res.status(401).json({ error: 'Invalid session' })
+            }
+            res.json({ user })
+        } catch {
+            res.status(500).json({ error: 'Failed to load session' })
+        }
+    },
 
     async login(req: Request, res: Response) {
         try {
             const { user, tokens } = await AuthService.login(req.body)
-            console.log('Login successful for user:', user, tokens)
+            setAccessTokenCookie(res, tokens.accessToken)
             res.cookie('refreshToken', tokens.refreshToken, {
                 ...refreshTokenCookieOptions,
                 maxAge: REFRESH_TOKEN_MAX_AGE_MS,
             })
-            res.json({ user, tokens: { accessToken: tokens.accessToken } })
+            res.json({ user })
         } catch (error: unknown) {
             const isAuthenticationFailure = [
                 'Invalid credentials',
@@ -45,6 +78,7 @@ export const AuthController = {
                 await AuthService.logout(refreshToken)
             }
             res.clearCookie('refreshToken', refreshTokenCookieOptions)
+            res.clearCookie('accessToken', accessTokenCookieOptions)
             res.status(204).send()
         } catch {
             console.error('Unexpected error during logout.')
@@ -59,7 +93,8 @@ export const AuthController = {
                 return res.status(401).json({ error: 'Refresh token is required' })
             }
             const tokens = await AuthService.refresh(refreshToken)
-            res.json(tokens)
+            setAccessTokenCookie(res, tokens.accessToken)
+            res.status(204).send()
         } catch {
             res.status(401).json({ error: 'Invalid or expired refresh token' })
         }
