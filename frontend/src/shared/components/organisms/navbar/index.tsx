@@ -28,8 +28,6 @@ const Navbar = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false)
     const navItems = useNavItems()
 
-    const navItems = useNavItems()
-
 const visibleItems = useMemo(() => {
     if (!user) return navItems.slice(0, 1)
 

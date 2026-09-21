@@ -8,8 +8,6 @@ const Sidebar = () => {
   const location = useLocation()
   const navItems = useNavItems()
 
-  const navItems = useNavItems()
-
   const visibleItems = !user
     ? navItems.slice(0, 1)
     : navItems.filter(item => item.allowedRoles.includes(user.role))
