@@ -15,26 +15,16 @@ const refreshClient = axios.create({
     headers: { 'Content-Type': 'application/json' }
 })
 
-let refreshPromise: Promise<string> | null = null
+let refreshPromise: Promise<void> | null = null
 
 const clearAuthentication = () => {
-    localStorage.removeItem('accessToken')
     window.dispatchEvent(new Event('auth:logout'))
 }
 
 const refreshAccessToken = () => {
     if (!refreshPromise) {
         refreshPromise = (async () => {
-            const { data } = await refreshClient.post<{ accessToken: string }>(
-                '/auth/refresh'
-            )
-
-            if (!data.accessToken) {
-                throw new Error('Refresh response did not include an access token')
-            }
-
-            localStorage.setItem('accessToken', data.accessToken)
-            return data.accessToken
+            await refreshClient.post('/auth/refresh')
         })()
             .catch((error: unknown) => {
                 clearAuthentication()
@@ -48,14 +38,6 @@ const refreshAccessToken = () => {
     return refreshPromise
 }
 
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-})
-
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -68,8 +50,7 @@ api.interceptors.response.use(
             original._retry = true
 
             try {
-                const accessToken = await refreshAccessToken()
-                original.headers.Authorization = `Bearer ${accessToken}`
+                await refreshAccessToken()
                 return api(original)
             } catch {
                 return Promise.reject(error)
