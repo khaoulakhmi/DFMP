@@ -3,7 +3,9 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/shared/context/useAuth'
 
 const GuestGuard = () => {
-    const { isAuthenticated } = useAuth()
+    const { isAuthenticated, isLoading } = useAuth()
+
+    if (isLoading) return null
 
     // if already logged in → redirect to home
     if (isAuthenticated) {

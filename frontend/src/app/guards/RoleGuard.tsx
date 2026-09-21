@@ -6,7 +6,9 @@ interface RoleGuardProps {
 }
 
 const RoleGuard = ({ allowedRoles }: RoleGuardProps) => {
-    const { user } = useAuth() // 👈 inside component ✅
+    const { user, isLoading } = useAuth() // 👈 inside component ✅
+
+    if (isLoading) return null
 
     if (!user || !allowedRoles.includes(user.role)) {
         return <Navigate to="/" replace />
