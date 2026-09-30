@@ -3,6 +3,10 @@ import { AuthService } from './auth.service'
 import { hasErrorMessage } from '../../utils/error'
 import { env } from '../../config/env'
 import { REFRESH_TOKEN_MAX_AGE_MS } from './auth.utils'
+import {
+    AuthenticationError,
+    type RotationRefreshResult,
+} from './auth.types'
 import jwt from 'jsonwebtoken'
 import prisma from '../../config/prisma'
 import { userSelect } from '../user/user.select'
@@ -29,6 +33,23 @@ const setAccessTokenCookie = (res: Response, token: string) => {
     })
 }
 
+const clearAuthCookies = (res: Response) => {
+    res.clearCookie('accessToken', accessTokenCookieOptions)
+    res.clearCookie('refreshToken', refreshTokenCookieOptions)
+}
+
+const setAuthCookies = (
+    res: Response,
+    result: RotationRefreshResult,
+) => {
+    setAccessTokenCookie(res, result.tokens.accessToken)
+
+    res.cookie('refreshToken', result.tokens.refreshToken, {
+        ...refreshTokenCookieOptions,
+        expires: result.refreshExpiresAt,
+    })
+}
+
 export const AuthController = {
 
     async me(req: Request, res: Response) {
@@ -47,29 +68,52 @@ export const AuthController = {
     },
 
     async login(req: Request, res: Response) {
-        try {
-            const { user, tokens } = await AuthService.login(req.body)
-            setAccessTokenCookie(res, tokens.accessToken)
-            res.cookie('refreshToken', tokens.refreshToken, {
-                ...refreshTokenCookieOptions,
-                maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+    try {
+        const result = await AuthService.loginWithRotation(req.body)
+
+        setAuthCookies(res, result)
+
+        res.json({ user: result.user })
+    } catch (error: unknown) {
+        if (error instanceof AuthenticationError) {
+            return res.status(401).json({
+                error: 'Invalid credentials',
             })
-            res.json({ user })
-        } catch (error: unknown) {
-            const isAuthenticationFailure = [
-                'Invalid credentials',
-                'Invalid password',
-                'Account is disabled',
-            ].some(message => hasErrorMessage(error, message))
-
-            if (isAuthenticationFailure) {
-                return res.status(401).json({ error: 'Invalid credentials' })
-            }
-
-            console.error('Unexpected error during login.', error)
-            res.status(500).json({ error: 'Failed to login' })
         }
-    },
+
+        // Avoid logging request bodies or tokens.
+        console.error('Unexpected login failure')
+
+        return res.status(500).json({
+            error: 'Failed to login',
+        })
+    }
+},
+
+    // async login(req: Request, res: Response) {
+    //     try {
+    //         const { user, tokens } = await AuthService.login(req.body)
+    //         setAccessTokenCookie(res, tokens.accessToken)
+    //         res.cookie('refreshToken', tokens.refreshToken, {
+    //             ...refreshTokenCookieOptions,
+    //             maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+    //         })
+    //         res.json({ user })
+    //     } catch (error: unknown) {
+    //         const isAuthenticationFailure = [
+    //             'Invalid credentials',
+    //             'Invalid password',
+    //             'Account is disabled',
+    //         ].some(message => hasErrorMessage(error, message))
+
+    //         if (isAuthenticationFailure) {
+    //             return res.status(401).json({ error: 'Invalid credentials' })
+    //         }
+
+    //         console.error('Unexpected error during login.', error)
+    //         res.status(500).json({ error: 'Failed to login' })
+    //     }
+    // },
 
     async logout(req: Request, res: Response) {
         try {
@@ -86,23 +130,58 @@ export const AuthController = {
         }
     },
 
+    // async refresh(req: Request, res: Response) {
+    //     try {
+    //         const refreshToken = req.cookies.refreshToken as string | undefined
+    //         if (!refreshToken) {
+    //             return res.status(401).json({ error: 'Refresh token is required' })
+    //         }
+    //         const tokens = await AuthService.refresh(refreshToken)
+    //         setAccessTokenCookie(res, tokens.accessToken)
+    //         res.status(204).send()
+    //     } catch {
+    //         res.status(401).json({ error: 'Invalid or expired refresh token' })
+    //     }
+    // },
     async refresh(req: Request, res: Response) {
-        try {
-            const refreshToken = req.cookies.refreshToken as string | undefined
-            if (!refreshToken) {
-                return res.status(401).json({ error: 'Refresh token is required' })
-            }
-            const tokens = await AuthService.refresh(refreshToken)
-            setAccessTokenCookie(res, tokens.accessToken)
-            res.status(204).send()
-        } catch {
-            res.status(401).json({ error: 'Invalid or expired refresh token' })
+    try {
+        const refreshToken = req.cookies?.refreshToken
+
+        if (
+            typeof refreshToken !== 'string' ||
+            refreshToken.length === 0
+        ) {
+            throw new AuthenticationError('Refresh token required')
         }
-    },
+
+        const result = await AuthService.refreshWithRotation(
+            refreshToken,
+        )
+
+        setAuthCookies(res, result)
+
+        return res.status(204).send()
+    } catch (error: unknown) {
+        if (error instanceof AuthenticationError) {
+            clearAuthCookies(res)
+
+            return res.status(401).json({
+                error: 'Invalid or expired session',
+            })
+        }
+
+        console.error('Unexpected refresh failure')
+
+        return res.status(500).json({
+            error: 'Failed to refresh session',
+        })
+    }
+},
 
     async resetPassword(req: Request, res: Response) {
         try {
             await AuthService.resetPassword(req.user.id, req.body)
+            clearAuthCookies(res)
             res.json({ message: 'Password reset successfully' })
         } catch (error: unknown) {
             if (hasErrorMessage(error, 'Old password is incorrect')) {

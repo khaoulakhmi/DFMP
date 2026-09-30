@@ -29,3 +29,22 @@ export interface LoginServiceResult {
     user: PublicUser
     tokens: AuthTokens
 }
+export interface RefreshTokenPayload {
+    userId: string
+    sessionId: string
+    jti: string
+    exp: number
+}
+
+export interface RotationLoginResult {
+    user: PublicUser
+    tokens: AuthTokens
+    refreshExpiresAt: Date
+}
+
+export class AuthenticationError extends Error {}
+
+export interface RotationRefreshResult {
+    tokens: AuthTokens
+    refreshExpiresAt: Date
+}
