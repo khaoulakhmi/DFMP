@@ -2,6 +2,7 @@ import express from "express";
 import { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { csrfProtection } from './middlewares/csrf.middleware'
 import { env } from "./config/env";
 import userRouter from "./modules/user/user.routes";
 import authRouter from "./modules/auth/auth.routes";
@@ -12,24 +13,20 @@ import LotRouter from "./modules/lot/lot.routes";
 import SpecificationRouter from "./modules/specification/specification.routes";
 const app = express();
 
+const frontendOrigin = new URL(env.frontendUrl).origin
+
 app.use(cors({
-  origin: env.frontendUrl,
-  credentials: true,
-}));
-// Cookie authentication requires rejecting mutations from untrusted origins.
-app.use((req, res, next) => {
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    const origin = req.get('Origin');
-    if ((origin && origin !== new URL(env.frontendUrl).origin) ||
-        req.get('Sec-Fetch-Site') === 'cross-site') {
-      return res.status(403).json({ error: 'Untrusted request origin' });
-    }
-  }
-  next();
-});
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+    origin: frontendOrigin,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Protection'],
+}))
+
+app.use('/api', csrfProtection)
+
+app.use(cookieParser())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 app.use("/api/users", userRouter);
 app.use('/api/auth', authRouter)
 app.use("/api/providers", providerRouter);
