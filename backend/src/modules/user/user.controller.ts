@@ -21,6 +21,15 @@ export const UserController = {
         try {
             const { username } = req.params as { username: string };
             const user = await UserService.getUserByUsername(username);
+            if (
+                req.user.role !== 'ADMIN' &&
+                (!user || user.id !== req.user.id)
+            ) {
+                return res.status(403).json({
+                    error: 'Forbidden',
+                    message: 'You can only access your own account',
+                });
+            }
             if (!user) {
                 return res.status(404).json({ error: 'User not found.' });
             }

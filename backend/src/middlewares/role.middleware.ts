@@ -22,3 +22,25 @@ export const authorize = (...allowedRoles: Role[]) => {
         next() // ✅ role is allowed → continue
     }
 }
+
+export const authorizeSelfOrAdmin = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const isAdmin = req.user.role === 'ADMIN'
+    const isSelf = req.user.id === req.params.id
+
+    if (!isAdmin && !isSelf) {
+        return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You can only access your own account',
+        })
+    }
+
+    next()
+}
