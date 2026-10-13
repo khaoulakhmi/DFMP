@@ -10,11 +10,7 @@ export const SpecificationController = {
             const specification = await SpecificationService.createSpecification(req.body);
             res.status(201).json(specification);
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_CREATE_SPECIFICATION',
-                message: 'Failed to create specification'
-            }));
+            next(error);
         }
     },
 
@@ -23,11 +19,7 @@ export const SpecificationController = {
             const specifications = await SpecificationService.getAllSpecifications();
             res.status(200).json(specifications);
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_RETRIEVE_SPECIFICATIONS',
-                message: 'Failed to retrieve specifications'
-            }));
+            next(error);
         }
     },
 
@@ -43,11 +35,7 @@ export const SpecificationController = {
             }
             res.status(200).json(specification);
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_RETRIEVE_SPECIFICATION',
-                message: 'Failed to retrieve specification'
-            }));
+            next(error);
         }
     },
 
@@ -56,11 +44,7 @@ export const SpecificationController = {
             const specification = await SpecificationService.updateSpecification(parseId(String(req.params.id)), req.body);
             res.status(200).json(specification);
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_UPDATE_SPECIFICATION',
-                message: 'Failed to update specification'
-            }));
+            next(error);
         }
     },
 
@@ -69,11 +53,7 @@ export const SpecificationController = {
             await SpecificationService.deleteSpecification(parseId(String(req.params.id)));
             res.status(204).send();
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_DELETE_SPECIFICATION',
-                message: 'Failed to delete specification'
-            }));
+            next(error);
         }
     },
 };

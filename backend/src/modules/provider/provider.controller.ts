@@ -14,11 +14,7 @@ export const ProviderController = {
             res.json(providers);
         } catch (error) {
             console.error('Error fetching providers:', error);
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_FETCH_PROVIDERS',
-                message: 'Failed to fetch providers.'
-            }));
+            next(error);
         }
     },
 
@@ -47,11 +43,7 @@ export const ProviderController = {
             const newProvider = await ProviderService.createProvider(providerData);
             res.status(201).json(newProvider);
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_CREATE_PROVIDER',
-                message: 'Failed to create provider.'
-            }));
+            next(error);
         }
     },
 
@@ -64,11 +56,7 @@ export const ProviderController = {
             const updatedProvider = await ProviderService.updateProvider(id, providerData);
             res.json(updatedProvider);
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_UPDATE_PROVIDER',
-                message: 'Failed to update provider.'
-            }));
+            next(error);
         }
     },
 
@@ -78,11 +66,7 @@ export const ProviderController = {
             await ProviderService.deleteProvider(id);
             res.status(204).send();
         } catch (error) {
-            next(new AppError({
-                statusCode: 500,
-                code: 'FAILED_TO_DELETE_PROVIDER',
-                message: 'Failed to delete provider.'
-            }));
+            next(error);
         }
     }
 }
