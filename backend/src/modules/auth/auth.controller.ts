@@ -53,18 +53,22 @@ const setAuthCookies = (
 
 export const AuthController = {
 
-    async me(req: Request, res: Response) {
+    async me(req: Request, res: Response, next: NextFunction) {
         try {
             const user = await prisma.user.findUnique({
                 where: { id: req.user.id },
                 select: userSelect,
             })
             if (!user || !user.status) {
-                return res.status(401).json({ error: 'Invalid session' })
+                return next(new AppError({
+                    statusCode: 401,
+                    code: 'INVALID_SESSION',
+                    message: 'Invalid session',
+                }))
             }
             res.json({ user })
-        } catch {
-            res.status(500).json({ error: 'Failed to load session' })
+        } catch (error: unknown) {
+            next(error)
         }
     },
 
@@ -99,9 +103,8 @@ export const AuthController = {
             res.clearCookie('accessToken', accessTokenCookieOptions)
             res.status(204).send()
         } 
-        catch {
-            console.error('Unexpected error during logout.')
-            res.status(500).json({ error: 'Failed to logout' })
+        catch(error: unknown) {
+            next(error)
         }
     },
 

@@ -71,7 +71,11 @@ export const LotController = {
             if (lot) {
                 res.status(200).json(lot);
             } else {
-                res.status(404).json({ error: 'Lot not found' });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'LOT_NOT_FOUND',
+                    message: 'Lot not found',
+                }));
             }
         } catch (error) {
             next(error);

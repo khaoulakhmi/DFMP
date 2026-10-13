@@ -24,13 +24,18 @@ export const UserController = {
                 req.user.role !== 'ADMIN' &&
                 (!user || user.id !== req.user.id)
             ) {
-                return res.status(403).json({
-                    error: 'Forbidden',
-                    message: 'You can only access your own account',
-                });
+                return next(new AppError({
+                    statusCode: 403,
+                    code: 'FORBIDDEN', 
+                    message: 'You do not have permission to access this resource.',
+                }));
             }
             if (!user) {
-                return res.status(404).json({ error: 'User not found.' });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'USER_NOT_FOUND',
+                    message: 'User not found.',
+                }));
             }
             res.json(user);
         } 
@@ -44,7 +49,11 @@ export const UserController = {
             const { id } = req.params as { id: string };
             const user = await UserService.getUserById(id);
             if (!user) {
-                return res.status(404).json({ error: 'User not found.' });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'USER_NOT_FOUND',
+                    message: 'User not found.',
+                }));
             }
             res.json(user);
         } 
