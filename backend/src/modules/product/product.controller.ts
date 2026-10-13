@@ -8,10 +8,8 @@ export const ProductController = {
     createProduct: async (req: Request, res: Response, next: NextFunction) => {
         
         const data = req.body;
-        console.log("Received product data:", data); // Debug log
         try {
             const product = await ProductService.createProduct(data);
-            console.log("Created product:", product); // Debug log
             res.status(201).json(product);
         } catch (error) {
             next(error);

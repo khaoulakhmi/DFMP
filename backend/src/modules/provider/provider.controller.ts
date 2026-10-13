@@ -10,10 +10,8 @@ export const ProviderController = {
     async getAllProviders(req: Request, res: Response, next: NextFunction) {
         try {
             const providers = await ProviderService.getAllProviders();
-            console.log(providers);
             res.json(providers);
         } catch (error) {
-            console.error('Error fetching providers:', error);
             next(error);
         }
     },
@@ -38,8 +36,6 @@ export const ProviderController = {
     async createProvider(req: Request, res: Response, next: NextFunction) {
         try {
             const providerData = req.body;
-            console.log('Received provider data:', providerData);
-            console.log('Content-Type:', req.headers['content-type']);
             const newProvider = await ProviderService.createProvider(providerData);
             res.status(201).json(newProvider);
         } catch (error) {
@@ -51,8 +47,6 @@ export const ProviderController = {
         try {
             const { id } = req.params as { id: string };
             const providerData = req.body;
-            console.log('Received provider data for update:', providerData);
-            console.log('Content-Type:', req.headers['content-type']);
             const updatedProvider = await ProviderService.updateProvider(id, providerData);
             res.json(updatedProvider);
         } catch (error) {

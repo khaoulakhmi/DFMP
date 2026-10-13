@@ -9,8 +9,6 @@ export const DesignationController = {
         // Logic to create a new designation
         try {
             const data = req.body;
-            console.log('Received designation data:', data);
-            console.log('Content-Type:', req.headers['content-type']);
             const designation = await DesignationService.createDesignation(data)
             res.status(201).json(designation);
         } catch (error) {
@@ -51,8 +49,6 @@ export const DesignationController = {
         try {            
             const { id } = req.params as { id: string };
             const data = req.body;
-            console.log('Received designation data for update:', data);
-            console.log('Content-Type:', req.headers['content-type']);
             const updatedDesignation = await DesignationService.updateDesignation(Number(id), data);
             res.status(200).json(updatedDesignation);
         } catch (error) {
