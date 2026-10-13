@@ -1,8 +1,8 @@
 // src/middlewares/validate.middleware.ts
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction, type RequestHandler } from 'express'
 import { ZodError, type ZodType } from 'zod'
 
-export const validate = (schema: ZodType) => {
+export const validate = (schema: ZodType): RequestHandler => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             schema.parse({
@@ -11,17 +11,21 @@ export const validate = (schema: ZodType) => {
                 query:  req.query
             })
             next() // ✅ passes validation → go to controller
-        } catch (error) {
-            if (error instanceof ZodError) {
-                return res.status(400).json({
-                    message: 'Validation failed',
-                    errors: error.issues.map((e: any) => ({
-                        field:   e.path.join('.'), // e.g "body.password"
-                        message: e.message         // e.g "Password must be at least 6 characters"
-                    }))
-                })
-            }
-            next(error) // unexpected error → pass to error handler
+        } 
+        catch (error: unknown) {
+            // if (error instanceof ZodError) {
+            //     const errors = error.issues.map(issue => ({
+            //         field: issue.path.join('.'),
+            //         message: issue.message,
+            //     }))
+
+            //     return res.status(400).json({
+            //         message: 'Validation failed',
+            //         errors,
+            //     })
+            // }
+ 
+            next(error)
         }
     }
 }
