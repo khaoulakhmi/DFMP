@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import { env } from '../config/env'
-
+import { AppError } from '../utils/AppError'
 const trustedOrigin = new URL(env.frontendUrl).origin
 const safeMethods = new Set(['GET', 'HEAD', 'OPTIONS'])
 
@@ -36,17 +36,19 @@ export const csrfProtection = (
     const sourceOrigin = getSourceOrigin(req)
 
     if (sourceOrigin !== trustedOrigin) {
-        return res.status(403).json({
+        return next(new AppError({
+            statusCode: 403,
             code: 'CSRF_REJECTED',
-            error: 'Missing or untrusted request origin',
-        })
+            message: 'Missing or untrusted request origin',
+        }))
     }
 
     if (req.get('X-CSRF-Protection') !== '1') {
-        return res.status(403).json({
+        return next(new AppError({
+            statusCode: 403,    
             code: 'CSRF_REJECTED',
-            error: 'Missing or invalid CSRF protection header',
-        })
+            message: 'Missing or invalid CSRF protection header',
+        }))
     }
 
     next()

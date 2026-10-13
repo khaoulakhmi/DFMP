@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../modules/auth/auth.utils'
 import prisma from '../config/prisma';
-
+import { AppError } from '../utils/AppError'
 // extend express Request type to include user
 declare global {
     namespace Express {
@@ -15,7 +15,11 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     try {
         const token = req.cookies?.accessToken
         if (typeof token !== 'string' || !token) {
-            return res.status(401).json({ error: 'No token provided' })
+            return next(new AppError({
+                statusCode: 401,
+                code: 'INVALID_TOKEN',
+                message: 'No token provided',
+            }))
         }
 
         let userId: string
@@ -23,16 +27,20 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         const payload = verifyAccessToken(token)
 
         if (typeof payload?.userId !== 'string' || !payload.userId) {
-            return res.status(401).json({
-                error: 'Invalid token payload',
-            })
+            return next(new AppError({
+                statusCode: 401,
+                code: 'INVALID_TOKEN',
+                message: 'Invalid token payload',
+            }))
         }
 
         userId = payload.userId
     } catch {
-        return res.status(401).json({
-            error: 'Invalid or expired token',
-        })
+        return next(new AppError({
+            statusCode: 401,
+            code: 'INVALID_TOKEN',
+            message: 'Invalid or expired token',
+        }))
     }
 
         try {
@@ -46,10 +54,11 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
             })
 
             if (!user || !user.status) {
-                return res.status(401).json({
-                    code: 'ACCOUNT_UNAVAILABLE',
-                    error: 'Account is unavailable',
-                })
+                return next(new AppError({
+                    statusCode: 401,
+                    code: 'INVALID_SESSION',
+                    message: 'Invalid session',
+                }))
             }
 
             // Use the current database role for authorization.
@@ -57,15 +66,16 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
                 id: user.id,
                 role: user.role,
             }
-        } catch {
-            console.error('Database lookup failed during authentication.')
+        } catch (error: unknown) {
 
-            return res.status(500).json({
-                error: 'Unable to verify account',
-            })
+            return next(error)
         }
         next()
-    } catch (error) {
-        return res.status(401).json({ error: 'Invalid or expired token' })
+    } catch (error: unknown) {
+        return next(new AppError({
+            statusCode: 401,
+            code: 'INVALID_TOKEN',
+            message: 'Invalid or expired token',
+        }))
     }
 }
