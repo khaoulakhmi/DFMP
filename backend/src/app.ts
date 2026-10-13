@@ -11,8 +11,13 @@ import designationRouter from "./modules/designation/designation.routes";
 import { ProductRouter } from "./modules/product/product.routes";
 import LotRouter from "./modules/lot/lot.routes";
 import SpecificationRouter from "./modules/specification/specification.routes";
+import { requestLogging } from './middlewares/requestLogging.middleware'
+import { errorHandler } from './middlewares/error.middleware'
+import { AppError } from './utils/AppError'
+
 const app = express();
 
+app.use(requestLogging)
 const frontendOrigin = new URL(env.frontendUrl).origin
 
 app.use(cors({
@@ -20,6 +25,12 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-CSRF-Protection'],
+    exposedHeaders: [
+    'X-Request-ID',
+    'Retry-After',
+    'RateLimit',
+    'RateLimit-Policy',
+    ],
 }))
 
 app.use('/api', csrfProtection)
@@ -37,5 +48,15 @@ app.use("/api/specifications", SpecificationRouter);
 app.get("/", (req: Request, res: Response) => {
   res.send("hello khaoula, API is running...");
 });
+
+app.use((_req, _res, next) => {
+    next(new AppError({
+        statusCode: 404,
+        code: 'ROUTE_NOT_FOUND',
+        message: 'Route not found',
+    }))
+})
+
+app.use(errorHandler)
 
 export default app;
