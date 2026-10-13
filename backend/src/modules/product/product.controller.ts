@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import ProductService from "./product.service";
+import { AppError } from "../../utils/AppError";
 
 
 
 export const ProductController = {
-    createProduct: async (req: Request, res: Response) => {
+    createProduct: async (req: Request, res: Response, next: NextFunction) => {
         
         const data = req.body;
         console.log("Received product data:", data); // Debug log
@@ -13,53 +14,56 @@ export const ProductController = {
             console.log("Created product:", product); // Debug log
             res.status(201).json(product);
         } catch (error) {
-            console.error("Error creating product:", error); // Debug log
-            res.status(500).json({ error: "Failed to create product" });
+            next(error);
         } 
     },
 
-    getProductById: async (req: Request, res: Response) => {
+    getProductById: async (req: Request, res: Response, next: NextFunction) => {
         const id = Number(req.params.id);
         try {
             const product = await ProductService.getProductById(id);
             if (product) {
                 res.json(product);
             } else {
-                res.status(404).json({ error: "Product not found" });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'PRODUCT_NOT_FOUND',
+                    message: 'Product not found',
+                }));
             }
         } catch (error) {
-            res.status(500).json({ error: "Failed to retrieve product" });
+            next(error);
         }
     },
 
-    updateProduct: async (req: Request, res: Response) => {
+    updateProduct: async (req: Request, res: Response, next: NextFunction) => {
         const id = Number(req.params.id);
         const data = req.body;
         try {
             const updatedProduct = await ProductService.updateProduct(id, data);
             res.json(updatedProduct);
         } catch (error) {
-            res.status(500).json({ error: "Failed to update product" });
+            next(error);
         }
     },
 
-    deleteProduct: async (req: Request, res: Response) => {
+    deleteProduct: async (req: Request, res: Response, next: NextFunction) => {
         const id = Number(req.params.id);
         try {            
             await ProductService.deleteProduct(id);
             res.status(204).send();
         } catch (error) {
-            res.status(500).json({ error: "Failed to delete product" });
+            next(error);
         }
     },
 
-    listProducts: async (req: Request, res: Response) => {
+    listProducts: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const products = await ProductService.listProducts();
             res.json(products);
         }
         catch (error) {
-            res.status(500).json({ error: "Failed to list products" });
-        }
+            next(error);
+        }                   
     }
-};
+}

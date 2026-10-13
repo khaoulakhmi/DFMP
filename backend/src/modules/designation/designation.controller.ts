@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { DesignationService } from "./designation.service";
+import { AppError } from "../../utils/AppError";
 
 
 
 export const DesignationController = {
-    createDesignation: async (req: Request, res: Response) => {
+    createDesignation: async (req: Request, res: Response, next: NextFunction) => {
         // Logic to create a new designation
         try {
             const data = req.body;
@@ -13,38 +14,39 @@ export const DesignationController = {
             const designation = await DesignationService.createDesignation(data)
             res.status(201).json(designation);
         } catch (error) {
-            console.error('Error creating designation:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            next(error);
         }
     },
 
-    getAllDesignations: async (req: Request, res: Response) => {
+    getAllDesignations: async (req: Request, res: Response, next: NextFunction) => {
         // Logic to retrieve all designations
         try {
             const designations = await DesignationService.getAllDesignations();
             res.status(200).json(designations);
         } catch (error) {
-            console.error('Error retrieving designations:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            next(error);
         }
     },
 
-    getDesignationById: async (req: Request, res: Response) => {
+    getDesignationById: async (req: Request, res: Response, next: NextFunction) => {
         // Logic to retrieve a designation by ID
         try {
             const { id } = req.params as { id: string };
             const designation = await DesignationService.getDesignationById(Number(id));
             if (!designation) {
-                return res.status(404).json({ error: 'Designation not found' });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'DESIGNATION_NOT_FOUND',
+                    message: 'Designation not found',
+                }));
             }
             res.status(200).json(designation);
         } catch (error) {
-            console.error('Error retrieving designation by ID:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            next(error);
         }
     },
 
-    updateDesignation: async (req: Request, res: Response) => {
+    updateDesignation: async (req: Request, res: Response, next: NextFunction) => {
         // Logic to update a designation
         try {            
             const { id } = req.params as { id: string };
@@ -54,20 +56,18 @@ export const DesignationController = {
             const updatedDesignation = await DesignationService.updateDesignation(Number(id), data);
             res.status(200).json(updatedDesignation);
         } catch (error) {
-            console.error('Error updating designation:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            next(error);
         }
     },
 
-    deleteDesignation: async (req: Request, res: Response) => {
+    deleteDesignation: async (req: Request, res: Response, next: NextFunction) => {
         // Logic to delete a designation
         try {
             const { id } = req.params as { id: string };
             await DesignationService.deleteDesignation(Number(id));
             res.status(204).send();
         } catch (error) {   
-            console.error('Error deleting designation:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            next(error);
         }
     }
 }

@@ -1,23 +1,28 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { LotService } from "./lot.service";
 import { hasErrorCode } from "../../utils/error";
+import { AppError } from "../../utils/AppError";
 
 
 export const LotController = {
-    createLot: async (req: Request, res: Response) => {
+    createLot: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const lotData = req.body;
             const newLot = await LotService.createLot(lotData);
             res.status(201).json(newLot);
         } catch (error: unknown) {
             if (hasErrorCode(error, 'P2003') || hasErrorCode(error, 'P2025')) {
-                return res.status(400).json({ error: 'Invalid lot relationship' });
+                return next(new AppError({
+                    statusCode: 400,
+                    code: 'INVALID_LOT_RELATIONSHIP',
+                    message: 'Invalid lot relationship',
+                }));
             }
-            res.status(500).json({ error: 'Failed to create lot' });
+            next(error);
         }
     },
 
-    updateLot: async (req: Request, res: Response) => {
+    updateLot: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const lotId = Number (req.params.id);
             const lotData = req.body;
@@ -25,29 +30,41 @@ export const LotController = {
             res.status(200).json(updatedLot);
         } catch (error: unknown) {
             if (hasErrorCode(error, 'P2025')) {
-                return res.status(404).json({ error: 'Lot not found' });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'LOT_NOT_FOUND',
+                    message: 'Lot not found',
+                }));
             }
             if (hasErrorCode(error, 'P2003')) {
-                return res.status(400).json({ error: 'Invalid lot relationship' });
+                return next(new AppError({
+                    statusCode: 400,
+                    code: 'INVALID_LOT_RELATIONSHIP',
+                    message: 'Invalid lot relationship',
+                }));
             }
-            res.status(500).json({ error: 'Failed to update lot' });
+            next(error);
         }
     },
 
-    deleteLot: async (req: Request, res: Response) => {
+    deleteLot: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const lotId = Number(req.params.id);
             await LotService.deleteLot(lotId);
             res.status(204).send();
         } catch (error: unknown) {
             if (hasErrorCode(error, 'P2025')) {
-                return res.status(404).json({ error: 'Lot not found' });
+                return next(new AppError({
+                    statusCode: 404,
+                    code: 'LOT_NOT_FOUND',
+                    message: 'Lot not found',
+                }));
             }
-            res.status(500).json({ error: 'Failed to delete lot' });
+            next(error);
         }
     },
 
-    getLotById: async (req: Request, res: Response) => {
+    getLotById: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const lotId = Number(req.params.id);
             const lot = await LotService.getLotById(lotId);
@@ -57,16 +74,16 @@ export const LotController = {
                 res.status(404).json({ error: 'Lot not found' });
             }
         } catch (error) {
-            res.status(500).json({ error: 'Failed to retrieve lot' });
+            next(error);
         }
     },
 
-    getAllLots: async (req: Request, res: Response) => {
+    getAllLots: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const lots = await LotService.getAllLots();
             res.status(200).json(lots);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to retrieve lots' });
+            next(error);
         }
     }
 }
