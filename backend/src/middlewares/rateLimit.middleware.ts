@@ -1,4 +1,6 @@
 import { rateLimit } from 'express-rate-limit'
+import { Request, Response, NextFunction } from 'express'
+import { AppError } from '../utils/AppError'
 
 export const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -6,10 +8,13 @@ export const loginLimiter = rateLimit({
     skipSuccessfulRequests: true,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: {
+   handler: (_req, _res, next) => {
+    next(new AppError({
+        statusCode: 429,
         code: 'LOGIN_RATE_LIMITED',
-        error: 'Too many login attempts. Please try again later.',
-    },
+        message: 'Too many login attempts. Please try again later.',
+    }))
+},
 })
 
 export const refreshLimiter = rateLimit({
@@ -17,8 +22,11 @@ export const refreshLimiter = rateLimit({
     limit: 30,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    message: {
+   handler: (_req, _res, next) => {
+    next(new AppError({
+        statusCode: 429,
         code: 'REFRESH_RATE_LIMITED',
-        error: 'Too many refresh requests. Please try again later.',
-    },
+        message: 'Too many refresh requests. Please try again later.',
+    }))
+},
 })

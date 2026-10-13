@@ -72,10 +72,6 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         }
         next()
     } catch (error: unknown) {
-        return next(new AppError({
-            statusCode: 401,
-            code: 'INVALID_TOKEN',
-            message: 'Invalid or expired token',
-        }))
+        return next(error)
     }
 }
