@@ -2,42 +2,59 @@ import bcrypt from "bcrypt";
 import prisma from "../src/config/prisma";
 
 async function main() {
-  const username = process.env.SEED_ADMIN_USERNAME;
-  const name = process.env.SEED_ADMIN_NAME;
-  const plainPassword = process.env.SEED_ADMIN_PASSWORD;
+    const username = process.env.SEED_ADMIN_USERNAME;
+    const name = process.env.SEED_ADMIN_NAME;
+    const plainPassword = process.env.SEED_ADMIN_PASSWORD;
 
-  if (!username || !plainPassword) {
-    throw new Error(
-      "Missing SEED_ADMIN_USERNAME or SEED_ADMIN_PASSWORD",
-    );
-  }
+    if (!username) {
+        throw new Error("Missing SEED_ADMIN_USERNAME");
+    }
 
-  const hashedPassword = await bcrypt.hash(plainPassword, 12);
+    const existing = await prisma.user.findUnique({
+        where: { username },
+        select: {
+            role: true,
+            status: true,
+        },
+    });
 
-  const admin = await prisma.user.upsert({
-    where: { username },
+    if (existing) {
+        if (existing.role !== "ADMIN" || !existing.status) {
+            throw new Error(
+                "Seed username belongs to a non-admin or disabled account",
+            );
+        }
 
-    update: {
-      password: hashedPassword,
-      role: "ADMIN",
-    },
+        console.log("Active admin already exists; no changes made.");
+        return;
+    }
 
-    create: {
-      name: name || "Admin",
-      username,
-      password: hashedPassword,
-      role: "ADMIN",
-    },
-  });
+    if (!plainPassword) {
+        throw new Error("Missing SEED_ADMIN_PASSWORD");
+    }
 
-  console.log(`Admin account ready: ${admin.username}`);
+    const hashedPassword = await bcrypt.hash(plainPassword, 12);
+
+    await prisma.user.create({
+        data: {
+            name: name || "Admin",
+            username,
+            password: hashedPassword,
+            role: "ADMIN",
+            status: true,
+        },
+    });
+
+    console.log("Initial admin created.");
 }
 
 main()
-  .catch((error) => {
-    console.error("Failed to seed admin:", error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+    .catch(() => {
+        console.error(
+            "Admin seed failed. Check seed configuration, account conflicts, and database connectivity.",
+        );
+        process.exitCode = 1;
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
