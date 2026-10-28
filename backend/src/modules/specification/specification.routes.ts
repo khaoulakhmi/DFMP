@@ -4,7 +4,7 @@ import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/role.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { SpecificationController } from "./specification.controller";
-import { createSpecificationSchema, updateSpecificationSchema } from "./specification.validation";
+import { createSpecificationSchema, specificationIdSchema, updateSpecificationSchema } from "./specification.validation";
 
 const SpecificationRouter = Router();
 
@@ -19,6 +19,7 @@ SpecificationRouter.get(
     "/:id",
     authenticate,
     authorize(Role.ADMIN, Role.FINANCE, Role.ACCOUNTANT, Role.SALES),
+    validate(specificationIdSchema),
     SpecificationController.getSpecificationById,
 );
 SpecificationRouter.put(
@@ -32,6 +33,7 @@ SpecificationRouter.delete(
     "/:id",
     authenticate,
     authorize(Role.ADMIN, Role.FINANCE),
+    validate(specificationIdSchema),
     SpecificationController.deleteSpecification,
 );
 SpecificationRouter.get(
