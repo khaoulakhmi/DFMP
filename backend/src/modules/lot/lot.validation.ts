@@ -1,32 +1,26 @@
 import z from "zod";
+import { intIdParams, intIdParamsSchema, intIdSchema } from "../../utils/id";
 
-const positiveId = z.coerce.number().int().positive();
-const productIds = z.array(positiveId).refine(
+const productIds = z.array(intIdSchema).refine(
     (ids) => new Set(ids).size === ids.length,
     { message: "Product IDs must be unique" },
 );
 
 const lotBodyFields = {
     name: z.string().trim().min(1, "Name is required"),
-    designationId: positiveId,
+    designationId: intIdSchema,
     productIds: productIds.optional(),
-    specificationsId: positiveId.nullable().optional(),
+    specificationsId: intIdSchema.nullable().optional(),
 };
 
-export const lotIdSchema = z.object({
-    params: z.object({
-        id: positiveId,
-    }).strict(),
-});
+export const lotIdSchema = intIdParamsSchema;
 
 export const createLotSchema = z.object({
     body: z.object(lotBodyFields).strict(),
 });
 
 export const updateLotSchema = z.object({
-    params: z.object({
-        id: positiveId,
-    }).strict(),
+    params: intIdParams,
     body: z.object({
         name: lotBodyFields.name.optional(),
         designationId: lotBodyFields.designationId.optional(),
