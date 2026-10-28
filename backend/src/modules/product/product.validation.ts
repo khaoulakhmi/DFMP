@@ -24,3 +24,13 @@ export const updateProductSchema = z.object({
     providerPrice: z.number().positive("Provider price must be a positive number").optional(),
     designationId: z.number().positive("Designation ID must be a positive number").optional(),
 });
+
+export const productIdSchema = z.object({
+    params: z.object({
+        id: z.string().cuid("Invalid product ID"),
+    }),
+});
+
+export const getProductsSchema = z.object({
+    query: z.object({}).strict(),
+});
