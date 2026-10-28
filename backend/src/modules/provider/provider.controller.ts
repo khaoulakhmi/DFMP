@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { ProviderService } from "./provider.service";
-import { AppError } from "../../utils/AppError";
+import { notFoundError } from "../../utils/AppError";
+import { parseCuidParam } from "../../utils/id";
+import { createPrismaErrorMapper } from "../../utils/prismaError";
 
-
-
+// Email is the only unique field on Provider.
+const mapPrismaError = createPrismaErrorMapper("Provider", {
+    duplicate: { code: "PROVIDER_EMAIL_EXISTS", message: "A provider with this email already exists" },
+});
 
 export const ProviderController = {
-    // Implement provider-related request handling here
     async getAllProviders(req: Request, res: Response, next: NextFunction) {
         try {
             const providers = await ProviderService.getAllProviders();
@@ -18,14 +21,10 @@ export const ProviderController = {
 
     async getProviderById(req: Request, res: Response, next: NextFunction) {
         try {
-            const { id } = req.params as { id: string };
+            const id = parseCuidParam(req.params.id);
             const provider = await ProviderService.getProviderById(id);
             if (!provider) {
-                return next(new AppError({
-                    statusCode: 404,
-                    code: 'PROVIDER_NOT_FOUND',
-                    message: 'Provider not found'
-                }));
+                return next(notFoundError("Provider"));
             }
             res.json(provider);
         } catch (error) {
@@ -35,32 +34,30 @@ export const ProviderController = {
 
     async createProvider(req: Request, res: Response, next: NextFunction) {
         try {
-            const providerData = req.body;
-            const newProvider = await ProviderService.createProvider(providerData);
+            const newProvider = await ProviderService.createProvider(req.body);
             res.status(201).json(newProvider);
         } catch (error) {
-            next(error);
+            next(mapPrismaError(error, "create"));
         }
     },
 
     async updateProvider(req: Request, res: Response, next: NextFunction) {
         try {
-            const { id } = req.params as { id: string };
-            const providerData = req.body;
-            const updatedProvider = await ProviderService.updateProvider(id, providerData);
+            const id = parseCuidParam(req.params.id);
+            const updatedProvider = await ProviderService.updateProvider(id, req.body);
             res.json(updatedProvider);
         } catch (error) {
-            next(error);
+            next(mapPrismaError(error, "update"));
         }
     },
 
-    async deleteProvider(req: Request, res: Response, next: NextFunction) {    
+    async deleteProvider(req: Request, res: Response, next: NextFunction) {
         try {
-            const { id } = req.params as { id: string };
+            const id = parseCuidParam(req.params.id);
             await ProviderService.deleteProvider(id);
             res.status(204).send();
         } catch (error) {
-            next(error);
+            next(mapPrismaError(error, "delete"));
         }
-    }
-}
+    },
+};
