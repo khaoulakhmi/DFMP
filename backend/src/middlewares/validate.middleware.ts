@@ -1,31 +1,26 @@
-// src/middlewares/validate.middleware.ts
-import { Request, Response, NextFunction, type RequestHandler } from 'express'
-import { ZodError, type ZodType } from 'zod'
+import type { RequestHandler } from "express";
+import type { ZodType } from "zod";
 
 export const validate = (schema: ZodType): RequestHandler => {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req, res, next) => {
         try {
-            schema.parse({
-                body:   req.body,
+            const parsed = schema.parse({
+                body: req.body,
                 params: req.params,
-                query:  req.query
-            })
-            next() // ✅ passes validation → go to controller
-        } 
-        catch (error: unknown) {
-            // if (error instanceof ZodError) {
-            //     const errors = error.issues.map(issue => ({
-            //         field: issue.path.join('.'),
-            //         message: issue.message,
-            //     }))
+                query: req.query,
+            });
 
-            //     return res.status(400).json({
-            //         message: 'Validation failed',
-            //         errors,
-            //     })
-            // }
- 
-            next(error)
+            if (
+                typeof parsed === "object" &&
+                parsed !== null &&
+                "body" in parsed
+            ) {
+                req.body = parsed.body;
+            }
+
+            next();
+        } catch (error: unknown) {
+            next(error);
         }
-    }
-}
+    };
+};
