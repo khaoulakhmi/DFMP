@@ -1,2 +1,16 @@
+node_modules
+dist
+coverage
+.git
+.vscode
+
 .env
 .env.*
+!.env.example
+
+*.log
+*.dump
+*.backup
+*.sql.gz
+
+src/generated/prisma
