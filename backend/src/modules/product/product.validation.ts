@@ -1,21 +1,11 @@
 import { z } from "zod";
 import { TVA } from "../../generated/prisma/enums";
-
-const MAX_INT = 2147483647;
-
-const idSchema = z.string()
-    .regex(/^[1-9]\d*$/, "ID must be a positive integer")
-    .refine(
-        value => Number(value) <= MAX_INT,
-        "ID is too large"
-    );
-
-const databaseIdSchema = z.number().int().positive().max(MAX_INT);
+import { intIdParams, intIdParamsSchema, intIdSchema, MAX_DB_INT } from "../../utils/id";
 
 const quantitySchema = z.number()
     .int("Quantity must be a whole number")
     .nonnegative("Quantity cannot be negative")
-    .max(MAX_INT);
+    .max(MAX_DB_INT);
 
 const priceSchema = z.number()
     .finite()
@@ -33,8 +23,8 @@ const productBodySchema = z.object({
     evaluationPrice: priceSchema.nullable().optional(),
     providerPrice: priceSchema.nullable().optional(),
 
-    designationId: databaseIdSchema,
-    lotId: databaseIdSchema.nullable().optional(),
+    designationId: intIdSchema,
+    lotId: intIdSchema.nullable().optional(),
 }).strict();
 
 export const createProductSchema = z.object({
@@ -48,9 +38,7 @@ export const createProductSchema = z.object({
 });
 
 export const updateProductSchema = z.object({
-    params: z.object({
-        id: idSchema,
-    }),
+    params: intIdParams,
 
     body: productBodySchema.partial()
         .refine(
@@ -83,11 +71,7 @@ export const updateProductSchema = z.object({
         }),
 });
 
-export const productIdSchema = z.object({
-    params: z.object({
-        id: idSchema,
-    }),
-});
+export const productIdSchema = intIdParamsSchema;
 
 export const getProductsSchema = z.object({
     query: z.object({}).strict(),
