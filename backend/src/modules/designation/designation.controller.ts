@@ -1,23 +1,22 @@
 import { NextFunction, Request, Response } from "express";
 import { DesignationService } from "./designation.service";
-import { AppError } from "../../utils/AppError";
+import { notFoundError } from "../../utils/AppError";
+import { parseIntIdParam } from "../../utils/id";
+import { createPrismaErrorMapper } from "../../utils/prismaError";
 
-
+const mapPrismaError = createPrismaErrorMapper("Designation");
 
 export const DesignationController = {
     createDesignation: async (req: Request, res: Response, next: NextFunction) => {
-        // Logic to create a new designation
         try {
-            const data = req.body;
-            const designation = await DesignationService.createDesignation(data)
+            const designation = await DesignationService.createDesignation(req.body);
             res.status(201).json(designation);
         } catch (error) {
-            next(error);
+            next(mapPrismaError(error, "create"));
         }
     },
 
     getAllDesignations: async (req: Request, res: Response, next: NextFunction) => {
-        // Logic to retrieve all designations
         try {
             const designations = await DesignationService.getAllDesignations();
             res.status(200).json(designations);
@@ -27,16 +26,11 @@ export const DesignationController = {
     },
 
     getDesignationById: async (req: Request, res: Response, next: NextFunction) => {
-        // Logic to retrieve a designation by ID
         try {
-            const { id } = req.params as { id: string };
-            const designation = await DesignationService.getDesignationById(Number(id));
+            const id = parseIntIdParam(req.params.id);
+            const designation = await DesignationService.getDesignationById(id);
             if (!designation) {
-                return next(new AppError({
-                    statusCode: 404,
-                    code: 'DESIGNATION_NOT_FOUND',
-                    message: 'Designation not found',
-                }));
+                return next(notFoundError("Designation"));
             }
             res.status(200).json(designation);
         } catch (error) {
@@ -45,25 +39,22 @@ export const DesignationController = {
     },
 
     updateDesignation: async (req: Request, res: Response, next: NextFunction) => {
-        // Logic to update a designation
-        try {            
-            const { id } = req.params as { id: string };
-            const data = req.body;
-            const updatedDesignation = await DesignationService.updateDesignation(Number(id), data);
+        try {
+            const id = parseIntIdParam(req.params.id);
+            const updatedDesignation = await DesignationService.updateDesignation(id, req.body);
             res.status(200).json(updatedDesignation);
         } catch (error) {
-            next(error);
+            next(mapPrismaError(error, "update"));
         }
     },
 
     deleteDesignation: async (req: Request, res: Response, next: NextFunction) => {
-        // Logic to delete a designation
         try {
-            const { id } = req.params as { id: string };
-            await DesignationService.deleteDesignation(Number(id));
+            const id = parseIntIdParam(req.params.id);
+            await DesignationService.deleteDesignation(id);
             res.status(204).send();
-        } catch (error) {   
-            next(error);
+        } catch (error) {
+            next(mapPrismaError(error, "delete"));
         }
-    }
-}
+    },
+};
