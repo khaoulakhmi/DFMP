@@ -1,5 +1,6 @@
 import z from "zod";
 import { AVSStatus } from "../../generated/prisma/enums";
+import { intIdParams, intIdParamsSchema, intIdSchema } from "../../utils/id";
 
 const optionalDate = z.union([z.string(), z.date()]).nullable().optional();
 const nullableText = z.string().trim().nullable().optional();
@@ -20,7 +21,7 @@ const tenderingSchema = z.object({
 // 1. Base object schema, no refinements
 const specificationBodySchema = z.object({
     type: z.string().trim().min(2, "Type is required"),
-    designationId: z.number().int().positive("Designation is required"),
+    designationId: intIdSchema,
     minAmount: z.number().nonnegative("Minimum amount must be positive"),
     maxAmount: z.number().nonnegative("Maximum amount must be positive"),
     year: z.number().int().min(2000).max(2100),
@@ -34,7 +35,7 @@ const specificationBodySchema = z.object({
     pubFrenchJournal: nullableText,
     pubArElecJournal: nullableText,
     pubFrElecJournal: nullableText,
-    lotIds: z.array(z.number().int().positive()).optional(),
+    lotIds: z.array(intIdSchema).optional(),
     tendering: tenderingSchema,
 });
 
@@ -51,6 +52,7 @@ export const createSpecificationSchema = z.object({
 
 // 3. Update schema = partial of the base (no refinement issue), with its own conditional check
 export const updateSpecificationSchema = z.object({
+    params: intIdParams,
     body: specificationBodySchema.partial().refine(
         data => {
             if (data.minAmount !== undefined && data.maxAmount !== undefined) {
@@ -64,3 +66,5 @@ export const updateSpecificationSchema = z.object({
         }
     ),
 });
+
+export const specificationIdSchema = intIdParamsSchema;
