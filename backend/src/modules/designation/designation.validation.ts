@@ -10,3 +10,12 @@ export const updateDesignationSchema = z.object({
     description: z.string().min(1, "Description is required").optional(),
 })
 
+export const designationIdSchema = z.object({
+    params: z.object({
+        id: z.string().cuid("Invalid designation ID"),
+    }),
+});
+
+export const getDesignationsSchema = z.object({
+    query: z.object({}).strict(),
+});
