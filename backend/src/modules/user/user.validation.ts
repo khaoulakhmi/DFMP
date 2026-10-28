@@ -1,5 +1,6 @@
 import z from "zod";
 import { Role } from "../../generated/prisma/enums";
+import { cuidParams, cuidParamsSchema } from "../../utils/id";
 
 const roleEnum = z.enum([Role.ADMIN, Role.SALES, Role.FINANCE, Role.ACCOUNTANT])
 
@@ -18,9 +19,7 @@ export const createUserSchema = z.object(
 
 export const updateUserSchema = z.object(
     {   
-        params: z.object({
-           id: z.cuid()       
-        }),
+        params: cuidParams,
         body : z.object({
             name: z.string().trim().min(1).optional(),
             username: z.string().trim().min(1).optional(),
@@ -32,3 +31,5 @@ export const updateUserSchema = z.object(
         )
     }
 )
+
+export const userIdSchema = cuidParamsSchema;
