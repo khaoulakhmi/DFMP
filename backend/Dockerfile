@@ -1,23 +1,46 @@
-# Use Node
-FROM node:20
+# syntax=docker/dockerfile:1
 
-# Create app directory
+# Shared Node.js base
+FROM node:22-bookworm-slim AS base
+
 WORKDIR /app
 
-# Copy files
-COPY package*.json ./
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install deps
-RUN npm install
 
-# Copy rest of code
+# Build the application
+FROM base AS build
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate Prisma client and compile TypeScript
+RUN npm run build
 
-# Expose port
+
+# Remove development dependencies
+FROM build AS production-dependencies
+
+RUN npm prune --omit=dev
+
+
+# Production runtime
+FROM base AS runtime
+
+ENV NODE_ENV=production
+
+COPY --from=production-dependencies /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/dist ./dist
+
+# Run without root privileges
+USER node
+
 EXPOSE 4000
 
-# Start app
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/src/server.js"]

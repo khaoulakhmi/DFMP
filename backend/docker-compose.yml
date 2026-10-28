@@ -17,6 +17,11 @@ services:
     build: .
     container_name: dfmp_api
     restart: always
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - "4000:4000"
     environment:
