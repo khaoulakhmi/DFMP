@@ -28,3 +28,13 @@ export const updateProviderSchema = z.object({
     commercialRegisterNumber: z.number().optional(),
     articleNumber: z.string().min(1, "Article number is required").optional(),
 })
+
+export const providerIdSchema = z.object({
+    params: z.object({
+        id: z.string().cuid("Invalid provider ID"),
+    }),
+});
+
+export const getProvidersSchema = z.object({
+    query: z.object({}).strict(),
+});
