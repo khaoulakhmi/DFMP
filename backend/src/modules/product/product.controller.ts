@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import ProductService from "./product.service";
 import { AppError } from "../../utils/AppError";
+import { CreateProductDTO, UpdateProductDTO } from "./product.types";
 
 
 
 export const ProductController = {
     createProduct: async (req: Request, res: Response, next: NextFunction) => {
-        
-        const data = req.body;
+        const data: CreateProductDTO = req.body;
         try {
             const product = await ProductService.createProduct(data);
             res.status(201).json(product);
@@ -36,7 +36,7 @@ export const ProductController = {
 
     updateProduct: async (req: Request, res: Response, next: NextFunction) => {
         const id = Number(req.params.id);
-        const data = req.body;
+        const data: UpdateProductDTO = req.body;
         try {
             const updatedProduct = await ProductService.updateProduct(id, data);
             res.json(updatedProduct);

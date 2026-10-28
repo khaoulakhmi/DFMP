@@ -1,29 +1,8 @@
-import { Designation } from "../../generated/prisma/client";
-import { TVA } from "../../generated/prisma/enums";
+import { z } from "zod";
+import { createProductSchema, updateProductSchema } from "./product.validation";
 
+// DTOs are derived from the Zod schemas so they always match what the
+// validate middleware puts on req.body.
+export type CreateProductDTO = z.infer<typeof createProductSchema>["body"];
 
-
-export type createProductDTO = {
-    name: string;
-    unit: string;
-    unitPrice: number;
-    tva: TVA;
-    quantityMax?: number;
-    quantityMin?: number;
-    evaluationPrice?: number;
-    providerPrice?: number;
-    designation: Designation;
-}
-
-
-export type updateProductDTO = {
-    name?: string;
-    unit?: string;
-    unitPrice?: number;
-    tva?: TVA;
-    quantityMax?: number;
-    quantityMin?: number;
-    evaluationPrice?: number;
-    providerPrice?: number;
-    designation?: Designation;
-}
+export type UpdateProductDTO = z.infer<typeof updateProductSchema>["body"];
