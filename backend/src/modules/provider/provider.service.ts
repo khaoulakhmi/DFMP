@@ -3,24 +3,15 @@ import prisma from "../../config/prisma";
 
 import { createProviderDTO, updateProviderDTO } from "./provider.types";
 
+// articleNumber is not a Provider column, so it is dropped before saving.
 const toCreateProviderData = (data: createProviderDTO) => {
-    const { articleNumber, NIF, NIS, ...providerData } = data;
-
-    return {
-        ...providerData,
-        NIF: Number(NIF),
-        NIS: Number(NIS),
-    };
+    const { articleNumber, ...providerData } = data;
+    return providerData;
 };
 
 const toUpdateProviderData = (data: updateProviderDTO) => {
-    const { articleNumber, NIF, NIS, ...providerData } = data;
-
-    return {
-        ...providerData,
-        ...(NIF !== undefined && { NIF: Number(NIF) }),
-        ...(NIS !== undefined && { NIS: Number(NIS) }),
-    };
+    const { articleNumber, ...providerData } = data;
+    return providerData;
 };
 
 

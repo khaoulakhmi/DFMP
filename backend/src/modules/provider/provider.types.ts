@@ -3,12 +3,12 @@ export type createProviderDTO = {
     company: string;
     email: string;
     phone: string;
-    bankAccountNumber: number;
+    bankAccountNumber: string;
     bankName: string;
     NIF: string;
     NIS: string;
     address: string;
-    commercialRegisterNumber: number;
+    commercialRegisterNumber: string;
     articleNumber: string;
 }
 
@@ -17,11 +17,11 @@ export type updateProviderDTO = {
     company?: string;
     email?: string;
     phone?: string;
-    bankAccountNumber?: number;
+    bankAccountNumber?: string;
     bankName?: string;
     NIF?: string;
     NIS?: string;
     address?: string;
-    commercialRegisterNumber?: number;
+    commercialRegisterNumber?: string;
     articleNumber?: string;
 }

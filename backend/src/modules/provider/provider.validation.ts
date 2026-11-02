@@ -6,12 +6,12 @@ const providerBodySchema = z.object({
     company: z.string().min(1, "Company is required"),
     email: z.string().email("Invalid email format"),
     phone: z.string().min(1, "Phone is required"),
-    bankAccountNumber: z.number(),
+    bankAccountNumber: z.string().trim().min(1, "Bank account number is required"),
     bankName: z.string().min(1, "Bank name is required"),
-    NIF: z.number(),
-    NIS: z.number(),
+    NIF: z.string().trim().min(1, "NIF is required"),
+    NIS: z.string().trim().min(1, "NIS is required"),
     address: z.string().min(1, "Address is required"),
-    commercialRegisterNumber: z.number(),
+    commercialRegisterNumber: z.string().trim().min(1, "Commercial register number is required"),
     articleNumber: z.string().min(1, "Article number is required"),
 })
 

@@ -1,15 +1,14 @@
 import { z } from "zod";
 import { TVA } from "../../generated/prisma/enums";
 import { intIdParams, intIdParamsSchema, intIdSchema, MAX_DB_INT } from "../../utils/id";
+import { amountSchema } from "../../utils/amount";
 
 const quantitySchema = z.number()
     .int("Quantity must be a whole number")
     .nonnegative("Quantity cannot be negative")
     .max(MAX_DB_INT);
 
-const priceSchema = z.number()
-    .finite()
-    .nonnegative("Price cannot be negative");
+const priceSchema = amountSchema;
 
 const productBodySchema = z.object({
     name: z.string().trim().min(1, "Name is required"),

@@ -1,6 +1,7 @@
 import z from "zod";
 import { AVSStatus } from "../../generated/prisma/enums";
 import { intIdParams, intIdParamsSchema, intIdSchema } from "../../utils/id";
+import { amountSchema } from "../../utils/amount";
 
 const optionalDate = z.union([z.string(), z.date()]).nullable().optional();
 const nullableText = z.string().trim().nullable().optional();
@@ -22,8 +23,8 @@ const tenderingSchema = z.object({
 const specificationBodySchema = z.object({
     type: z.string().trim().min(2, "Type is required"),
     designationId: intIdSchema,
-    minAmount: z.number().nonnegative("Minimum amount must be positive"),
-    maxAmount: z.number().nonnegative("Maximum amount must be positive"),
+    minAmount: amountSchema,
+    maxAmount: amountSchema,
     year: z.number().int().min(2000).max(2100),
     depositDateCM: optionalDate,
     sessionDate: optionalDate,
