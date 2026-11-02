@@ -42,6 +42,8 @@ export const createPrismaErrorMapper = (resource: string, options: Options = {})
                 return options.duplicate
                     ? conflictError(options.duplicate.code, options.duplicate.message)
                     : alreadyExistsError(resource)
+            case "P2018":
+                return invalidReferenceError();
             default:
                 return error
         }
