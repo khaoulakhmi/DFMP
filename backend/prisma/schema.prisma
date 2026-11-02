@@ -95,7 +95,7 @@ model Restaurant {
   id          Int       @id @default(autoincrement())
   name        String    
   residenceId Int
-  residence   Residence @relation(fields: [residenceId], references: [id])
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 }
 
 model Product {
@@ -109,9 +109,9 @@ model Product {
   quantityMin     Int      
   quantityMax     Int      
   designationId   Int
-  designation   Designation @relation(fields: [designationId], references: [id])     
+  designation   Designation @relation(fields: [designationId], references: [id], onDelete: Restrict, onUpdate: Cascade)     
   lotId           Int?
-  lot             Lot?      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lot             Lot?      @relation(fields: [lotId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -120,10 +120,10 @@ model Lot {
   id              Int               @id @default(autoincrement())
   name            String            
   designationId       Int
-  designation         Designation      @relation(fields: [designationId], references: [id])     
+  designation   Designation @relation(fields: [designationId], references: [id], onDelete: Restrict, onUpdate: Cascade)  
   products        Product[]
   markets         Market[]
-  specifications  Specifications?   @relation(fields: [specificationsId], references: [id])
+  specifications  Specifications?   @relation(fields: [specificationsId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   specificationsId Int?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -133,7 +133,7 @@ model Specifications {
   id                  Int       @id @default(autoincrement()) // Cahier de Charge [1, 3]
   type                String
   designationId       Int
-  designation         Designation      @relation(fields: [designationId], references: [id])     
+  designation         Designation      @relation(fields: [designationId], references: [id], onDelete: Restrict, onUpdate: Cascade)     
   minAmount           Decimal    @db.Decimal(20, 2) // Montant Min [3]
   maxAmount           Decimal     @db.Decimal(20, 2) // Montant Max [3]
   year                Int       // Année [3]
@@ -159,7 +159,7 @@ model Specifications {
 model Tendering {
   id                  Int            @id @default(autoincrement())
   specificationsId    Int            @unique
-  specifications      Specifications @relation(fields: [specificationsId], references: [id])
+  specifications      Specifications @relation(fields: [specificationsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   
   // Evaluation Phase [3]
   openingDate         DateTime?      // Date l'ouverture
@@ -182,9 +182,9 @@ model Market {
   id              Int       @id @default(autoincrement()) // Marché [1, 2]
   marketNumber    String    @unique // N° du Marché
   providerId      String
-  provider        Provider  @relation(fields: [providerId], references: [id])
+  provider        Provider  @relation(fields: [providerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   lotId           Int
-  lot             Lot       @relation(fields: [lotId], references: [id])
+  lot             Lot       @relation(fields: [lotId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   date            DateTime
   
   // Administrative Visas [1, 2]
@@ -204,9 +204,9 @@ model Invoice {
   id              Int      @id @default(autoincrement()) // Facture [1, 2]
   invoiceNumber   String   @unique // N° Facture
   providerId      String
-  provider        Provider @relation(fields: [providerId], references: [id])
+  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   marketId        Int
-  market          Market   @relation(fields: [marketId], references: [id])
+  market          Market   @relation(fields: [marketId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   amount          Decimal  @db.Decimal(20, 2)  // Montant
   quantity        Int      // Qtite
   createdAt       DateTime @default(now())
