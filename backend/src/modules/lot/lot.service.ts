@@ -1,5 +1,11 @@
 import { CreateLotDTO, UpdateLotDTO } from './lot.types';
 import prisma from '../../config/prisma';
+import {
+    invalidReferenceError,
+    notFoundError,
+} from "../../utils/AppError";
+import { runSerializableTransaction } from "../../utils/transaction";
+
 
 export const LotService = {
     createLot: async (lotData: CreateLotDTO) => {
@@ -16,16 +22,70 @@ export const LotService = {
     },
 
     updateLot: async (lotId: number, lotData: UpdateLotDTO) => {
-        return await prisma.lot.update({
-            where: { id: lotId },
-            data: {
-                name: lotData.name,
-                designationId: lotData.designationId,
-                specificationsId: lotData.specificationsId,
-                products: lotData.productIds ? {
-                    set: lotData.productIds.map(id => ({ id }))
-                } : undefined
+        return runSerializableTransaction(async tx => {
+            // First check the record being updated.
+            const lot = await tx.lot.findUnique({
+                where: { id: lotId },
+                select: { id: true },
+            });
+
+            if (!lot) {
+                throw notFoundError("Lot");
             }
+
+            // Check a new designation, if supplied.
+            if (lotData.designationId !== undefined) {
+                const designation = await tx.designation.findUnique({
+                    where: { id: lotData.designationId },
+                    select: { id: true },
+                });
+
+                if (!designation) {
+                    throw invalidReferenceError();
+                }
+            }
+
+            // null means disconnect; only check an actual ID.
+            if (
+                lotData.specificationsId !== undefined &&
+                lotData.specificationsId !== null
+            ) {
+                const specification = await tx.specifications.findUnique({
+                    where: { id: lotData.specificationsId },
+                    select: { id: true },
+                });
+
+                if (!specification) {
+                    throw invalidReferenceError();
+                }
+            }
+
+            // Every supplied product must exist.
+            if (lotData.productIds !== undefined) {
+                const ids = [...new Set(lotData.productIds)];
+
+                const count = await tx.product.count({
+                    where: { id: { in: ids } },
+                });
+
+                if (count !== ids.length) {
+                    throw invalidReferenceError();
+                }
+            }
+
+            return tx.lot.update({
+                where: { id: lotId },
+                data: {
+                    name: lotData.name,
+                    designationId: lotData.designationId,
+                    specificationsId: lotData.specificationsId,
+                    products: lotData.productIds !== undefined
+                        ? {
+                            set: lotData.productIds.map(id => ({ id })),
+                        }
+                        : undefined,
+                },
+            });
         });
     },
 

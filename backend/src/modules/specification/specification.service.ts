@@ -1,5 +1,10 @@
 import prisma from "../../config/prisma";
 import type { CreateSpecificationDTO, TenderingDTO, UpdateSpecificationDTO } from "./specification.types";
+import {
+    invalidReferenceError,
+    notFoundError,
+} from "../../utils/AppError";
+import { runSerializableTransaction } from "../../utils/transaction";
 
 const toDate = (value?: string | Date | null) => {
     if (!value) return null;
@@ -81,38 +86,88 @@ export const SpecificationService = {
         });
     },
 
-    updateSpecification: async (id: number, data: UpdateSpecificationDTO) => {
-        const tendering = tenderingData(data.tendering);
+    updateSpecification: async (
+        id: number,
+        data: UpdateSpecificationDTO
+    ) => {
+        return runSerializableTransaction(async tx => {
+            const specification = await tx.specifications.findUnique({
+                where: { id },
+                select: { id: true },
+            });
 
-        return prisma.specifications.update({
-            where: { id },
-            data: {
-                type: data.type,
-                designationId: data.designationId,
-                minAmount: data.minAmount,
-                maxAmount: data.maxAmount,
-                year: data.year,
-                depositDateCM: data.depositDateCM === undefined ? undefined : toDate(data.depositDateCM),
-                sessionDate: data.sessionDate === undefined ? undefined : toDate(data.sessionDate),
-                visaDate: data.visaDate === undefined ? undefined : toDate(data.visaDate),
-                visaNumber: data.visaNumber,
-                pubArabicDate: data.pubArabicDate === undefined ? undefined : toDate(data.pubArabicDate),
-                pubArabicJournal: data.pubArabicJournal,
-                pubFrenchDate: data.pubFrenchDate === undefined ? undefined : toDate(data.pubFrenchDate),
-                pubFrenchJournal: data.pubFrenchJournal,
-                pubArElecJournal: data.pubArElecJournal,
-                pubFrElecJournal: data.pubFrElecJournal,
-                lots: data.lotIds ? {
-                    set: data.lotIds.map(lotId => ({ id: lotId })),
-                } : undefined,
-                tendering: tendering ? {
-                    upsert: {
-                        create: tendering,
-                        update: tendering,
-                    },
-                } : undefined,
-            },
-            include,
+            if (!specification) {
+                throw notFoundError("Specification");
+            }
+
+            if (data.designationId !== undefined) {
+                const designation = await tx.designation.findUnique({
+                    where: { id: data.designationId },
+                    select: { id: true },
+                });
+
+                if (!designation) {
+                    throw invalidReferenceError();
+                }
+            }
+
+            if (data.lotIds !== undefined) {
+                const ids = [...new Set(data.lotIds)];
+
+                const count = await tx.lot.count({
+                    where: { id: { in: ids } },
+                });
+
+                if (count !== ids.length) {
+                    throw invalidReferenceError();
+                }
+            }
+
+            const tendering = tenderingData(data.tendering);
+
+            return tx.specifications.update({
+                where: { id },
+                data: {
+                    type: data.type,
+                    designationId: data.designationId,
+                    minAmount: data.minAmount,
+                    maxAmount: data.maxAmount,
+                    year: data.year,
+
+                    depositDateCM: data.depositDateCM === undefined
+                        ? undefined : toDate(data.depositDateCM),
+                    sessionDate: data.sessionDate === undefined
+                        ? undefined : toDate(data.sessionDate),
+                    visaDate: data.visaDate === undefined
+                        ? undefined : toDate(data.visaDate),
+                    visaNumber: data.visaNumber,
+
+                    pubArabicDate: data.pubArabicDate === undefined
+                        ? undefined : toDate(data.pubArabicDate),
+                    pubArabicJournal: data.pubArabicJournal,
+                    pubFrenchDate: data.pubFrenchDate === undefined
+                        ? undefined : toDate(data.pubFrenchDate),
+                    pubFrenchJournal: data.pubFrenchJournal,
+                    pubArElecJournal: data.pubArElecJournal,
+                    pubFrElecJournal: data.pubFrElecJournal,
+
+                    lots: data.lotIds !== undefined
+                        ? {
+                            set: data.lotIds.map(lotId => ({ id: lotId })),
+                        }
+                        : undefined,
+
+                    tendering: tendering
+                        ? {
+                            upsert: {
+                                create: tendering,
+                                update: tendering,
+                            },
+                        }
+                        : undefined,
+                },
+                include,
+            });
         });
     },
 
