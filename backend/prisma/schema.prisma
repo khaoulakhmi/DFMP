@@ -33,12 +33,12 @@ model Provider {
   company   String
   email     String @unique
   phone     String
-  bankAccountNumber Int
-  bankName String
-  NIF       Float
-  NIS       Float
+  bankAccountNumber String 
+  bankName  String
+  NIF       String
+  NIS       String
   address   String
-  commercialRegisterNumber Int
+  commercialRegisterNumber String
   markets                 Market[]
   invoices                Invoice[]
   createdAt DateTime @default(now())
