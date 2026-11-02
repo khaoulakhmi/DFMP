@@ -72,6 +72,7 @@ model RefreshToken {
   session   AuthSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+  @@index([userId])
 }
 
 model Designation {
@@ -94,8 +95,10 @@ model Residence {
 model Restaurant {
   id          Int       @id @default(autoincrement())
   name        String    
-  residenceId Int
+  residenceId Int   
   residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([residenceId])
 }
 
 model Product {
@@ -114,6 +117,9 @@ model Product {
   lot             Lot?      @relation(fields: [lotId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([designationId])
+  @@index([lotId])
 }
 
 model Lot {
@@ -127,6 +133,9 @@ model Lot {
   specificationsId Int?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  @@index([designationId])
+  @@index([specificationsId])
 }
 
 model Specifications {
@@ -154,12 +163,14 @@ model Specifications {
 
   lots                Lot[]
   tendering           Tendering?
+
+  @@index([designationId])
 }
 
 model Tendering {
   id                  Int            @id @default(autoincrement())
   specificationsId    Int            @unique
-  specifications      Specifications @relation(fields: [specificationsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  specifications      Specifications @relation(fields: [specificationsId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   
   // Evaluation Phase [3]
   openingDate         DateTime?      // Date l'ouverture
@@ -198,6 +209,9 @@ model Market {
   status          DealStatus @default(PENDING)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+
+  @@index([providerId])
+  @@index([lotId])
 }
 
 model Invoice {
@@ -210,6 +224,9 @@ model Invoice {
   amount          Decimal  @db.Decimal(20, 2)  // Montant
   quantity        Int      // Qtite
   createdAt       DateTime @default(now())
+
+@@index([providerId])
+@@index([marketId])
 }
 
 enum Role {
