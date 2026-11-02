@@ -102,10 +102,10 @@ model Product {
   id              Int      @id @default(autoincrement())
   name            String 
   unit            String   
-  unitPrice       Float
-  evaluationPrice Float?    
+  unitPrice       Decimal  @db.Decimal(20, 2)
+  evaluationPrice Decimal? @db.Decimal(20, 2)   
   tva             TVA
-  providerPrice   Float?    
+  providerPrice   Decimal? @db.Decimal(20, 2) 
   quantityMin     Int      
   quantityMax     Int      
   designationId   Int
@@ -134,8 +134,8 @@ model Specifications {
   type                String
   designationId       Int
   designation         Designation      @relation(fields: [designationId], references: [id])     
-  minAmount           Float     // Montant Min [3]
-  maxAmount           Float     // Montant Max [3]
+  minAmount           Decimal    @db.Decimal(20, 2) // Montant Min [3]
+  maxAmount           Decimal     @db.Decimal(20, 2) // Montant Max [3]
   year                Int       // Année [3]
   
   // Internal Timeline
@@ -207,7 +207,7 @@ model Invoice {
   provider        Provider @relation(fields: [providerId], references: [id])
   marketId        Int
   market          Market   @relation(fields: [marketId], references: [id])
-  amount          Float    // Montant
+  amount          Decimal  @db.Decimal(20, 2)  // Montant
   quantity        Int      // Qtite
   createdAt       DateTime @default(now())
 }
