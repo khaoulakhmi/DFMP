@@ -65,7 +65,6 @@ type Props = {
 
 const ProductsSection = ({ lot, products }: Props) => {
     const [modalOpen, setModalOpen] = useState(false)
-    const assignedIds = products.map(p => p.id)
 
     return (
         <>
@@ -115,7 +114,6 @@ const ProductsSection = ({ lot, products }: Props) => {
                 open={modalOpen}
                 onClose={() => setModalOpen(false)}
                 lotId={lot.id}
-                alreadyAssigned={assignedIds}
             />
         </>
     )

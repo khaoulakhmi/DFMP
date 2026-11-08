@@ -1,10 +1,13 @@
-import { lotApi } from "@/api/lot.api"
+import { lotApi, type LotSortField } from "@/api/lot.api"
 import Badge from "@/shared/components/atoms/badge"
+import FilterSelect from "@/shared/components/molecules/FilterSelect"
 import Table from "@/shared/components/organisms/Table"
+import { useServerTable } from "@/shared/hooks/useServerTable"
+import { useI18n } from "@/shared/i18n/useI18n"
 import type { Lot } from "@/shared/types/lot.types"
 import type { Column } from "@/shared/types/table.types"
 import { Text, VStack } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Link as RouterLink } from "react-router-dom"
 
 const columns: Column<Lot>[] = [
@@ -28,10 +31,10 @@ const columns: Column<Lot>[] = [
         ),
     },
     {
-        key: "products",
+        key: "_count",
         label: "Products",
-        render: value => {
-            const count = Array.isArray(value) ? value.length : 0
+        render: (_, row) => {
+            const count = row._count?.products ?? row.products?.length ?? 0
             return <Badge label={`${count} product${count === 1 ? "" : "s"}`} variant={count ? "accent" : "neutral"} />
         },
     },
@@ -42,20 +45,46 @@ const columns: Column<Lot>[] = [
     },
 ]
 
+type LotFilters = { hasSpecification?: boolean }
+
 const LotList = () => {
-    const { data: lots = [] as Lot[], isLoading, isError } = useQuery<Lot[]>({
-        queryKey: ["lots"],
-        queryFn: lotApi.getAll,
+    const { t } = useI18n()
+    const table = useServerTable<LotSortField, LotFilters>({ pageSize: 10 })
+
+    const lotsQuery = useQuery({
+        queryKey: ["lots", "list", table.params],
+        queryFn: () => lotApi.list(table.params),
+        placeholderData: keepPreviousData,
     })
+
+    const statusValue = table.filters.hasSpecification === undefined
+        ? ""
+        : String(table.filters.hasSpecification)
 
     return (
         <Table
-            data={lots}
+            data={lotsQuery.data?.data ?? []}
             columns={columns}
             searchable
-            searchKeys={["name"]}
-            isLoading={isLoading}
-            isError={isError}
+            server={table.tableState(lotsQuery.data?.pagination, lotsQuery.isFetching)}
+            filters={(
+                <FilterSelect
+                    label="Status"
+                    value={statusValue}
+                    onChange={value => table.setFilter(
+                        "hasSpecification",
+                        value === "" ? undefined : value === "true",
+                    )}
+                    options={[
+                        { value: "", label: t("common.all") },
+                        { value: "true", label: t("dashboard.activeLots") },
+                        { value: "false", label: t("dashboard.lotsWithoutSpecification") },
+                    ]}
+                />
+            )}
+            isLoading={lotsQuery.isLoading}
+            isError={lotsQuery.isError}
+            onRetry={() => void lotsQuery.refetch()}
             keyExtractor={lot => String(lot.id)}
         />
     )

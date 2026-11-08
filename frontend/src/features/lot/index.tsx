@@ -6,19 +6,12 @@ import { FiPlus } from "react-icons/fi"
 import Button from "@/shared/components/atoms/button"
 import { useState } from "react"
 import CreateLotModal from "./components/createLotModal"
-import { useQuery } from "@tanstack/react-query"
-import type { Designation } from "@/shared/types/designation.types"
-import { designationApi } from "@/api/designation.api"
 import { useI18n } from "@/shared/i18n/useI18n"
 
 const Lot = () => {
     const { t } = useI18n()
 
     const [createLotOpen, SetCreateLotOpen] = useState(false)
-    const {data: designations = [] as Designation[]} = useQuery({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
-    })
     return (
         <Box p={{ base: 4, md: 6 }}>
             <BreadcrumbNavigation
@@ -48,7 +41,7 @@ const Lot = () => {
             <Box mt={5}>
                 <LotList />
             </Box>
-            <CreateLotModal open={createLotOpen} onClose={() => SetCreateLotOpen(false)} designations={designations} />
+            <CreateLotModal open={createLotOpen} onClose={() => SetCreateLotOpen(false)} />
         </Box>
     )
 }

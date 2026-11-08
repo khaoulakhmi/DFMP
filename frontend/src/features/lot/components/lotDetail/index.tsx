@@ -1,7 +1,5 @@
 import { lotApi } from "@/api/lot.api"
-import { productApi } from "@/api/product.api"
 import type { Lot } from "@/shared/types/lot.types"
-import type { Product } from "@/shared/types/product.types"
 import { Box, Flex, Spinner, Text, VStack } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
 import { useParams } from "react-router-dom"
@@ -21,12 +19,7 @@ const LotDetailPage = () => {
         enabled: Boolean(id),
     })
 
-    const { data: products = [] as Product[], isLoading: isProductsLoading } = useQuery<Product[]>({
-        queryKey: ["products"],
-        queryFn: productApi.getAll,
-    })
-
-    if (isLotLoading || isProductsLoading) {
+    if (isLotLoading) {
         return (
             <Flex h="64" align="center" justify="center">
                 <Spinner color="primary.500" />
@@ -43,9 +36,8 @@ const LotDetailPage = () => {
     }
 
     const spec = lot.specifications as SpecificationDetails | null | undefined
-    const lotProducts = lot.products?.length
-        ? lot.products
-        : products.filter(p => p.lotId === lot.id)
+    // The lot detail endpoint returns all of the lot's products.
+    const lotProducts = lot.products ?? []
     const productCount = lotProducts.length
     const marketCount = lot.specificationsId ? 1 : 0
     const invoiceCount = productCount + marketCount

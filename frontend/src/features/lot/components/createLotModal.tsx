@@ -1,15 +1,14 @@
 import { lotApi } from "@/api/lot.api"
 import Button from "@/shared/components/atoms/button"
 import TextField from "@/shared/components/molecules/Forms/textField"
-import SelectField from "@/shared/components/molecules/Forms/selectField"
+import DesignationSelect from "@/shared/components/molecules/Forms/DesignationSelect"
 import Modal from "@/shared/components/molecules/modal"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
-import type { Designation } from "@/shared/types/designation.types"
 import type { CreateLotDTO } from "@/shared/types/lot.types"
 import { Box, HStack, VStack } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 
 const required = (label: string) => `${label} is required`
 
@@ -21,13 +20,12 @@ type LotForm = {
 interface CreateLotModalProps {
     open: boolean
     onClose: () => void
-    designations: Designation[]
     defaultDesignationId?: number | null
 }
 
-const CreateLotModal = ({ open, onClose, designations, defaultDesignationId }: CreateLotModalProps) => {
+const CreateLotModal = ({ open, onClose, defaultDesignationId }: CreateLotModalProps) => {
     const queryClient = useQueryClient()
-    const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<LotForm>({
+    const { register, handleSubmit, reset, control, formState: { errors, isDirty } } = useForm<LotForm>({
         mode: "onBlur",
         defaultValues: {
             name: "",
@@ -48,6 +46,8 @@ const CreateLotModal = ({ open, onClose, designations, defaultDesignationId }: C
         mutationFn: lotApi.create,
         onSuccess: (lot) => {
             queryClient.invalidateQueries({ queryKey: ["lots"] })
+            // Designation rows show lot counts.
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Lot created",
                 description: `${lot.name} has been created successfully.`,
@@ -112,21 +112,26 @@ const CreateLotModal = ({ open, onClose, designations, defaultDesignationId }: C
                             minLength: { value: 2, message: "Lot name must be at least 2 characters" },
                         })}
                     />
-                    <SelectField
-                        label="Designation"
-                        error={errors.designationId?.message}
-                        required
-                        showRequiredIndicator
-                        {...register("designationId", {
+                    <Controller
+                        control={control}
+                        name="designationId"
+                        rules={{
                             required: required("Designation"),
                             validate: value => Number(value) > 0 || "Select a designation",
-                        })}
-                    >
-                        <option value="">Select designation</option>
-                        {designations.map(designation => (
-                            <option key={designation.id} value={designation.id}>{designation.name}</option>
-                        ))}
-                    </SelectField>
+                        }}
+                        render={({ field }) => (
+                            <DesignationSelect
+                                label="Designation"
+                                placeholder="Select designation"
+                                error={errors.designationId?.message}
+                                required
+                                showRequiredIndicator
+                                value={field.value}
+                                onChange={designation => field.onChange(designation ? String(designation.id) : "")}
+                                onBlur={field.onBlur}
+                            />
+                        )}
+                    />
                 </VStack>
             </Box>
         </Modal>

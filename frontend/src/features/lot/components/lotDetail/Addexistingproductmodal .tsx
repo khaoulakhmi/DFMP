@@ -1,9 +1,13 @@
 import { productApi } from "@/api/product.api"
 import Badge from "@/shared/components/atoms/badge"
 import Button from "@/shared/components/atoms/button"
+import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue"
+import { useI18n } from "@/shared/i18n/useI18n"
 import type { Product } from "@/shared/types/product.types"
 import {
     Box,
+    chakra,
     Dialog,
     Flex,
     HStack,
@@ -12,8 +16,8 @@ import {
     Text,
     VStack,
 } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useMemo, useState } from "react"
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { FiPackage, FiSearch, FiX } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { formatMoney, tvaLabels } from "./lot-detail.types"
@@ -22,60 +26,76 @@ type Props = {
     open: boolean
     onClose: () => void
     lotId: number
-    alreadyAssigned: number[]
 }
 
-const AddExistingProductModal = ({ open, onClose, lotId, alreadyAssigned }: Props) => {
+const PAGE_SIZE = 20
+
+const AddExistingProductModal = ({ open, onClose, lotId }: Props) => {
     const queryClient = useQueryClient()
     const navigate = useNavigate()
+    const { t } = useI18n()
     const [search, setSearch] = useState("")
-    const [selectedIds, setSelectedIds] = useState<number[]>([])
+    // Kept across searches and pages, so picks are never lost.
+    const [selected, setSelected] = useState<Map<number, Product>>(new Map())
+    const debouncedSearch = useDebouncedValue(search.trim(), 300)
 
-    const { data: allProducts = [], isLoading } = useQuery<Product[]>({
-        queryKey: ["products"],
-        queryFn: productApi.getAll,
+    // Products not already in this lot, searched on the server.
+    const productsQuery = useInfiniteQuery({
+        queryKey: ["products", "not-in-lot", lotId, { search: debouncedSearch }],
+        queryFn: ({ pageParam }) => productApi.list({
+            page: pageParam,
+            pageSize: PAGE_SIZE,
+            notInLotId: lotId,
+            search: debouncedSearch || undefined,
+            sortBy: "name",
+            sortOrder: "asc",
+        }),
+        initialPageParam: 1,
+        getNextPageParam: last =>
+            last.pagination.page < last.pagination.totalPages ? last.pagination.page + 1 : undefined,
+        enabled: open,
     })
 
-    const available = useMemo(
-        () => allProducts.filter(p =>
-            !alreadyAssigned.includes(p.id) &&
-            p.name.toLowerCase().includes(search.toLowerCase())
-        ),
-        [allProducts, alreadyAssigned, search]
-    )
+    const available = productsQuery.data?.pages.flatMap(page => page.data) ?? []
+    const total = productsQuery.data?.pages[0]?.pagination.total ?? 0
 
-    const { mutate: assign, isPending } = useMutation({
-        mutationFn: (productId: number) =>
-            productApi.update(productId, { lotId }),
-        onSuccess: (_data, productId) => {
-            // called once per product; only close after last one
-            setSelectedIds(prev => {
-                const remaining = prev.filter(id => id !== productId)
-                if (remaining.length === 0) {
-                    queryClient.invalidateQueries({ queryKey: ["lots"] })
-                    queryClient.invalidateQueries({ queryKey: ["products"] })
-                    handleClose()
-                }
-                return remaining
+    const handleClose = () => {
+        setSearch("")
+        setSelected(new Map())
+        onClose()
+    }
+
+    const assignMutation = useMutation({
+        mutationFn: (productIds: number[]) =>
+            Promise.all(productIds.map(productId => productApi.update(productId, { lotId }))),
+        onSettled: () => {
+            // Some updates may have succeeded even if one failed.
+            void queryClient.invalidateQueries({ queryKey: ["lots"] })
+            void queryClient.invalidateQueries({ queryKey: ["products"] })
+            void queryClient.invalidateQueries({ queryKey: ["designations"] })
+        },
+        onSuccess: () => handleClose(),
+        onError: () => {
+            toaster.create({
+                title: "Erreur",
+                description: "Impossible d'affecter tous les produits. Veuillez réessayer.",
+                type: "error",
             })
         },
     })
 
-    const handleClose = () => {
-        setSearch("")
-        setSelectedIds([])
-        onClose()
-    }
-
-    const toggleProduct = (id: number) => {
-        setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        )
+    const toggleProduct = (product: Product) => {
+        setSelected(previous => {
+            const next = new Map(previous)
+            if (next.has(product.id)) next.delete(product.id)
+            else next.set(product.id, product)
+            return next
+        })
     }
 
     const handleConfirm = () => {
-        if (selectedIds.length === 0) return
-        for (const id of selectedIds) assign(id)
+        if (selected.size === 0) return
+        assignMutation.mutate([...selected.keys()])
     }
 
     return (
@@ -123,32 +143,43 @@ const AddExistingProductModal = ({ open, onClose, lotId, alreadyAssigned }: Prop
 
                     {/* List */}
                     <Box px={5} pb={2} minH="64" maxH="72" overflowY="auto">
-                        {isLoading ? (
+                        {productsQuery.isLoading ? (
                             <Flex h="40" align="center" justify="center">
                                 <Spinner color="primary.500" size="sm" />
+                            </Flex>
+                        ) : productsQuery.isError ? (
+                            <Flex h="40" align="center" justify="center" direction="column" gap={2}>
+                                <Text fontSize="sm" color="error.600">{t("common.failedToLoad")}</Text>
+                                <chakra.button type="button" fontSize="sm" color="primary.700" onClick={() => void productsQuery.refetch()}>
+                                    {t("common.retry")}
+                                </chakra.button>
                             </Flex>
                         ) : available.length === 0 ? (
                             <Flex h="40" align="center" justify="center" direction="column" gap={2}>
                                 <Box color="neutral.400" fontSize="2xl"><FiPackage /></Box>
                                 <Text fontSize="sm" color="neutral.500">
-                                    {search ? "Aucun produit trouvé" : "Tous les produits sont déjà dans ce lot"}
+                                    {debouncedSearch ? "Aucun produit trouvé" : "Tous les produits sont déjà dans ce lot"}
                                 </Text>
                             </Flex>
                         ) : (
                             <VStack align="stretch" gap={2} py={2}>
                                 {available.map(product => {
-                                    const isSelected = selectedIds.includes(product.id)
+                                    const isSelected = selected.has(product.id)
                                     return (
-                                        <Flex
+                                        <chakra.button
                                             key={product.id}
-                                            align="center" gap={3}
+                                            type="button"
+                                            display="flex"
+                                            alignItems="center" gap={3}
                                             px={3} py={2.5}
+                                            textAlign="start"
                                             borderRadius="lg"
                                             border="1px solid"
                                             borderColor={isSelected ? "primary.400" : "neutral.200"}
                                             bg={isSelected ? "primary.50" : "white"}
                                             cursor="pointer"
-                                            onClick={() => toggleProduct(product.id)}
+                                            aria-pressed={isSelected}
+                                            onClick={() => toggleProduct(product)}
                                             transition="all 0.15s"
                                             _hover={{ borderColor: "primary.300", bg: isSelected ? "primary.50" : "neutral.50" }}
                                         >
@@ -167,6 +198,9 @@ const AddExistingProductModal = ({ open, onClose, lotId, alreadyAssigned }: Prop
                                                         {product.name}
                                                     </Text>
                                                     <Badge label={tvaLabels[product.tva]} variant="neutral" tone="subtle" size="sm" />
+                                                    {product.lot && (
+                                                        <Badge label={`Lot: ${product.lot.name}`} variant="warning" tone="subtle" size="sm" />
+                                                    )}
                                                 </HStack>
                                                 <Text fontSize="xs" color="neutral.600" mt={0.5}>
                                                     {product.unit} · {formatMoney(product.unitPrice)}
@@ -179,9 +213,23 @@ const AddExistingProductModal = ({ open, onClose, lotId, alreadyAssigned }: Prop
                                                     bg="primary.500"
                                                 />
                                             )}
-                                        </Flex>
+                                        </chakra.button>
                                     )
                                 })}
+
+                                {productsQuery.hasNextPage && (
+                                    <chakra.button
+                                        type="button"
+                                        py={2}
+                                        fontSize="sm"
+                                        color="primary.700"
+                                        fontWeight="medium"
+                                        disabled={productsQuery.isFetchingNextPage}
+                                        onClick={() => void productsQuery.fetchNextPage()}
+                                    >
+                                        {productsQuery.isFetchingNextPage ? <Spinner size="xs" /> : t("common.loadMore")}
+                                    </chakra.button>
+                                )}
                             </VStack>
                         )}
                     </Box>
@@ -194,9 +242,9 @@ const AddExistingProductModal = ({ open, onClose, lotId, alreadyAssigned }: Prop
                         gap={3}
                     >
                         <Text fontSize="xs" color="neutral.500">
-                            {selectedIds.length > 0
-                                ? `${selectedIds.length} produit${selectedIds.length > 1 ? "s" : ""} sélectionné${selectedIds.length > 1 ? "s" : ""}`
-                                : `${available.length} produit${available.length !== 1 ? "s" : ""} disponible${available.length !== 1 ? "s" : ""}`}
+                            {selected.size > 0
+                                ? `${selected.size} produit${selected.size > 1 ? "s" : ""} sélectionné${selected.size > 1 ? "s" : ""}`
+                                : `${total} produit${total !== 1 ? "s" : ""} disponible${total !== 1 ? "s" : ""}`}
                         </Text>
                         <HStack gap={2}>
                             <Box w="24">
@@ -219,12 +267,12 @@ const AddExistingProductModal = ({ open, onClose, lotId, alreadyAssigned }: Prop
                                     type="button"
                                     variant="primary"
                                     size="sm"
-                                    disabled={selectedIds.length === 0 || isPending}
+                                    disabled={selected.size === 0 || assignMutation.isPending}
                                     onClick={handleConfirm}
                                 >
-                                    {isPending
+                                    {assignMutation.isPending
                                         ? <Spinner size="xs" />
-                                        : `Affecter${selectedIds.length > 1 ? ` (${selectedIds.length})` : ""}`}
+                                        : `Affecter${selected.size > 1 ? ` (${selected.size})` : ""}`}
                                 </Button>
                             </Box>
                         </HStack>
