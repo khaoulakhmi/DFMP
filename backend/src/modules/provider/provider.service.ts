@@ -1,6 +1,8 @@
 
 import prisma from "../../config/prisma";
-
+import type { Prisma } from "../../generated/prisma/client";
+import type { ProviderListQuery } from "./provider.validation";
+import { pageToSkip, paginate } from "../../utils/pagination";
 import { createProviderDTO, updateProviderDTO } from "./provider.types";
 
 // articleNumber is not a Provider column, so it is dropped before saving.
@@ -21,9 +23,52 @@ export const ProviderService = {
         return await prisma.provider.create({ data: toCreateProviderData(data) });
     },
 
-    getAllProviders: async () => {
-        // Logic to retrieve all providers
-        return await prisma.provider.findMany();
+    getAllProviders: async (query: ProviderListQuery) => {
+        const {
+            page,
+            pageSize,
+            search,
+            company,
+            sortBy,
+            sortOrder,
+        } = query;
+
+        const where: Prisma.ProviderWhereInput = {};
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" } },
+                { company: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+                { phone: { contains: search, mode: "insensitive" } },
+                { NIF: { contains: search, mode: "insensitive" } },
+                { NIS: { contains: search, mode: "insensitive" } },
+            ];
+        }
+
+        if (company) {
+            where.company = { equals: company };
+        }
+
+        const orderBy: Prisma.ProviderOrderByWithRelationInput[] = [
+            { [sortBy]: sortOrder },
+            { id: "asc" },
+        ];
+
+        const [data, total] = await prisma.$transaction(
+            [
+                prisma.provider.findMany({
+                    where,
+                    orderBy,
+                    skip: pageToSkip(page, pageSize),
+                    take: pageSize,
+                }),
+                prisma.provider.count({ where }),
+            ],
+            { isolationLevel: "RepeatableRead" },
+        );
+
+        return paginate(data, total, page, pageSize);
     },
 
     getProviderById: async (id: string) => {

@@ -1,5 +1,7 @@
 import z from "zod"
 import { cuidParams, cuidParamsSchema } from "../../utils/id"
+import { paginationQueryShape, sortOrderSchema } from "../../utils/pagination";
+
 
 const providerBodySchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -27,6 +29,20 @@ export const updateProviderSchema = z.object({
 
 export const providerIdSchema = cuidParamsSchema;
 
+export const providerListQuerySchema = z.object({
+    ...paginationQueryShape,
+
+    company: z.string().trim().min(1).max(200).optional(),
+
+    sortBy: z
+        .enum(["name", "company", "email", "createdAt"])
+        .default("createdAt"),
+    sortOrder: sortOrderSchema.default("desc"),
+}).strict();
+
 export const getProvidersSchema = z.object({
-    query: z.object({}).strict(),
+    query: providerListQuerySchema,
 });
+
+export type ProviderListQuery =
+    z.infer<typeof providerListQuerySchema>;

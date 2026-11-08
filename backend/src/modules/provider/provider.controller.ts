@@ -3,6 +3,7 @@ import { ProviderService } from "./provider.service";
 import { notFoundError } from "../../utils/AppError";
 import { parseCuidParam } from "../../utils/id";
 import { createPrismaErrorMapper } from "../../utils/prismaError";
+import type { ProviderListQuery } from "./provider.validation";
 
 // Email is the only unique field on Provider.
 const mapPrismaError = createPrismaErrorMapper("Provider", {
@@ -10,11 +11,18 @@ const mapPrismaError = createPrismaErrorMapper("Provider", {
 });
 
 export const ProviderController = {
-    async getAllProviders(req: Request, res: Response, next: NextFunction) {
+    async getAllProviders(
+        req: Request,
+        res: Response<unknown, { validatedQuery: ProviderListQuery }>,
+        next: NextFunction,
+    ) {
         try {
-            const providers = await ProviderService.getAllProviders();
-            res.json(providers);
-        } catch (error) {
+            const result = await ProviderService.getAllProviders(
+                res.locals.validatedQuery,
+            );
+
+            res.json(result);
+        } catch (error: unknown) {
             next(error);
         }
     },
