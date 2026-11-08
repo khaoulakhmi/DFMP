@@ -1,13 +1,9 @@
-import { designationApi } from "@/api/designation.api"
-import { lotApi } from "@/api/lot.api"
 import { specificationApi } from "@/api/specification.api"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
-import type { Designation } from "@/shared/types/designation.types"
-import type { Lot } from "@/shared/types/lot.types"
-import { Box, Flex, Spinner } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Box } from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState, type MouseEvent } from "react"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { toSpecificationPayload } from "../specificationForm/specificationForm.utils"
 import type { SpecificationForm, SpecificationFormField } from "../specificationForm/types"
@@ -46,26 +42,9 @@ const CreateSpecificationPage = () => {
         },
     })
 
-    const selectedDesignationId = Number(useWatch({ control, name: "designationId" }))
-
-    const { data: designations = [], isLoading: isLoadingDesignations } = useQuery<Designation[]>({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
-    })
-
-    const { data: lots = [], isLoading: isLoadingLots } = useQuery<Lot[]>({
-        queryKey: ["lots"],
-        queryFn: lotApi.getAll,
-    })
-
-    const availableLots = useMemo(
-        () => lots.filter(lot => lot.designationId === selectedDesignationId),
-        [lots, selectedDesignationId],
-    )
-
     const steps = useMemo(
-        () => buildCreateSpecificationSteps({ availableLots, designations, errors, getValues, register }),
-        [availableLots, designations, errors, getValues, register],
+        () => buildCreateSpecificationSteps({ control, errors, getValues, register }),
+        [control, errors, getValues, register],
     )
 
     const createMutation = useMutation({
@@ -73,6 +52,7 @@ const CreateSpecificationPage = () => {
         onSuccess: (specification) => {
             queryClient.invalidateQueries({ queryKey: ["specifications"] })
             queryClient.invalidateQueries({ queryKey: ["lots"] })
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Cahier de charge cree",
                 description: `${specification.type} ${specification.year} a ete cree.`,
@@ -119,10 +99,6 @@ const CreateSpecificationPage = () => {
         }
 
         createMutation.mutate(toSpecificationPayload(data))
-    }
-
-    if (isLoadingDesignations || isLoadingLots) {
-        return <Flex h="64" align="center" justify="center"><Spinner color="primary.500" /></Flex>
     }
 
     return (

@@ -1,15 +1,11 @@
-import { designationApi } from "@/api/designation.api"
-import { lotApi } from "@/api/lot.api"
 import { specificationApi } from "@/api/specification.api"
 import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNavigation"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
-import type { Designation } from "@/shared/types/designation.types"
-import type { Lot } from "@/shared/types/lot.types"
 import type { Specification, UpdateSpecificationDTO } from "@/shared/types/specification.types"
 import { Box, Flex, Spinner, Text } from "@chakra-ui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useMemo, useState } from "react"
-import { useForm, useWatch } from "react-hook-form"
+import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
 import { useNavigate, useParams } from "react-router-dom"
 import { toFormValues, toUpdateSpecificationPayload } from "../specificationForm/specificationForm.utils"
 import type { SpecificationForm } from "../specificationForm/types"
@@ -29,16 +25,6 @@ const SpecificationDetailPage = () => {
         enabled: Boolean(id),
     })
 
-    const { data: designations = [] } = useQuery<Designation[]>({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
-    })
-
-    const { data: lots = [] } = useQuery<Lot[]>({
-        queryKey: ["lots"],
-        queryFn: lotApi.getAll,
-    })
-
     const {
         register,
         handleSubmit,
@@ -54,11 +40,6 @@ const SpecificationDetailPage = () => {
         if (specification) reset(toFormValues(specification))
     }, [reset, specification])
 
-    const selectedDesignationId = Number(useWatch({ control, name: "designationId" }))
-    const availableLots = useMemo(
-        () => lots.filter(lot => lot.designationId === selectedDesignationId),
-        [lots, selectedDesignationId],
-    )
 
     const updateMutation = useMutation({
         mutationFn: (payload: UpdateSpecificationDTO) => specificationApi.update(String(id), payload),
@@ -66,6 +47,7 @@ const SpecificationDetailPage = () => {
             queryClient.setQueryData(["specifications", id], updatedSpecification)
             queryClient.invalidateQueries({ queryKey: ["specifications"] })
             queryClient.invalidateQueries({ queryKey: ["lots"] })
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Cahier de charge modifie",
                 description: `${updatedSpecification.type} ${updatedSpecification.year} a ete mis a jour.`,
@@ -121,8 +103,8 @@ const SpecificationDetailPage = () => {
 
             {isEditing ? (
                 <SpecificationEditForm
-                    availableLots={availableLots}
-                    designations={designations}
+                    control={control}
+                    specification={specification}
                     errors={errors}
                     getValues={getValues}
                     handleSubmit={handleSubmit}

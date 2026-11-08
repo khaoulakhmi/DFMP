@@ -1,13 +1,16 @@
 import SelectField from "@/shared/components/molecules/Forms/selectField"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import { useI18n } from "@/shared/i18n/useI18n"
+import DesignationSelect from "@/shared/components/molecules/Forms/DesignationSelect"
 import type { Designation } from "@/shared/types/designation.types"
 import { SimpleGrid } from "@chakra-ui/react"
-import type { FieldErrors, UseFormGetValues, UseFormRegister } from "react-hook-form"
+import { Controller, type Control, type FieldErrors, type UseFormGetValues, type UseFormRegister } from "react-hook-form"
 import type { SpecificationForm } from "./types"
 
 type GeneralInformationFieldsProps = {
-    designations: Designation[]
+    control: Control<SpecificationForm>
+    // Designation of the record being edited, so its label shows immediately.
+    selectedDesignation?: Designation | null | undefined
     errors: FieldErrors<SpecificationForm>
     getValues: UseFormGetValues<SpecificationForm>
     register: UseFormRegister<SpecificationForm>
@@ -15,7 +18,7 @@ type GeneralInformationFieldsProps = {
 
 const specificationTypeValues = ["AO", "AP", "AC", "BC", "MG"] as const
 
-const GeneralInformationFields = ({ designations, errors, getValues, register }: GeneralInformationFieldsProps) => {
+const GeneralInformationFields = ({ control, selectedDesignation, errors, getValues, register }: GeneralInformationFieldsProps) => {
     const { t } = useI18n()
 
     const required = (field: string) => t("validation.required", { field })
@@ -37,21 +40,27 @@ const GeneralInformationFields = ({ designations, errors, getValues, register }:
                     <option key={type} value={type}>{t(`specification.type.${type}`)}</option>
                 ))}
             </SelectField>
-            <SelectField
-                label={t("specification.general.designation")}
-                error={errors.designationId?.message}
-                required
-                showRequiredIndicator
-                {...register("designationId", {
+            <Controller
+                control={control}
+                name="designationId"
+                rules={{
                     required: required(t("specification.general.designation")),
                     validate: value => Number(value) > 0 || t("validation.invalidDesignation"),
-                })}
-            >
-                <option value="">{t("specification.designation.placeholder")}</option>
-                {designations.map(designation => (
-                    <option key={designation.id} value={designation.id}>{designation.name}</option>
-                ))}
-            </SelectField>
+                }}
+                render={({ field }) => (
+                    <DesignationSelect
+                        label={t("specification.general.designation")}
+                        placeholder={t("specification.designation.placeholder")}
+                        error={errors.designationId?.message}
+                        required
+                        showRequiredIndicator
+                        selectedItem={selectedDesignation}
+                        value={field.value}
+                        onChange={designation => field.onChange(designation ? String(designation.id) : "")}
+                        onBlur={field.onBlur}
+                    />
+                )}
+            />
             <TextField
                 label={t("specification.general.minAmount")}
                 type="number"

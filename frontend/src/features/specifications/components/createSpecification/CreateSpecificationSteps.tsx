@@ -1,8 +1,6 @@
 import type { StepperItem } from "@/shared/components/molecules/stepper"
-import type { Designation } from "@/shared/types/designation.types"
-import type { Lot } from "@/shared/types/lot.types"
 import { VStack } from "@chakra-ui/react"
-import type { FieldErrors, UseFormGetValues, UseFormRegister } from "react-hook-form"
+import type { Control, FieldErrors, UseFormGetValues, UseFormRegister } from "react-hook-form"
 import { FiCalendar, FiCheckCircle, FiFileText, FiGlobe } from "react-icons/fi"
 import DepositVisaFields from "../specificationForm/DepositVisaFields"
 import EvaluationFields from "../specificationForm/EvaluationFields"
@@ -13,16 +11,14 @@ import type { SpecificationForm } from "../specificationForm/types"
 import CreateSpecificationSection from "./CreateSpecificationSection"
 
 type BuildCreateSpecificationStepsParams = {
-    availableLots: Lot[]
-    designations: Designation[]
+    control: Control<SpecificationForm>
     errors: FieldErrors<SpecificationForm>
     getValues: UseFormGetValues<SpecificationForm>
     register: UseFormRegister<SpecificationForm>
 }
 
 export const buildCreateSpecificationSteps = ({
-    availableLots,
-    designations,
+    control,
     errors,
     getValues,
     register,
@@ -33,7 +29,7 @@ export const buildCreateSpecificationSteps = ({
         icon: <FiFileText />,
         content: (
             <CreateSpecificationSection title="Informations generales" description="Type de procedure, designation concernee et enveloppe financiere.">
-                <GeneralInformationFields designations={designations} errors={errors} getValues={getValues} register={register} />
+                <GeneralInformationFields control={control} errors={errors} getValues={getValues} register={register} />
             </CreateSpecificationSection>
         ),
     },
@@ -57,7 +53,7 @@ export const buildCreateSpecificationSteps = ({
                     <PublicityFields register={register} />
                 </CreateSpecificationSection>
                 <CreateSpecificationSection title="Lots concernes" description="Lots lies au meme designation que le cahier de charge.">
-                    <LotCheckboxGrid lots={availableLots} register={register} />
+                    <LotCheckboxGrid control={control} />
                 </CreateSpecificationSection>
             </VStack>
         ),

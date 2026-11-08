@@ -1,10 +1,11 @@
-import { specificationApi } from "@/api/specification.api"
+import { specificationApi, type SpecificationSortField } from "@/api/specification.api"
 import Badge from "@/shared/components/atoms/badge"
 import Table from "@/shared/components/organisms/Table"
+import { useServerTable } from "@/shared/hooks/useServerTable"
 import type { Specification } from "@/shared/types/specification.types"
 import type { Column } from "@/shared/types/table.types"
 import { HStack, Text, VStack } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { FiArrowUpRight } from "react-icons/fi"
 import { Link as RouterLink } from "react-router-dom"
 import { formatMoney } from "./specification.utils"
@@ -41,18 +42,26 @@ const columns: Column<Specification>[] = [
     {
         key: "minAmount",
         label: "Montant min",
+        sortable: true,
         render: value => <Text fontSize="sm" fontWeight="medium">{formatMoney(Number(value))}</Text>,
     },
     {
         key: "maxAmount",
         label: "Montant max",
+        sortable: true,
         render: value => <Text fontSize="sm" fontWeight="medium">{formatMoney(Number(value))}</Text>,
     },
     {
-        key: "lots",
+        key: "year",
+        label: "Annee",
+        sortable: true,
+        render: value => <Text fontSize="sm">{String(value)}</Text>,
+    },
+    {
+        key: "_count",
         label: "Lots",
-        render: value => {
-            const count = Array.isArray(value) ? value.length : 0
+        render: (_, row) => {
+            const count = row._count?.lots ?? row.lots?.length ?? 0
             return <Badge label={`${count} lot${count === 1 ? "" : "s"}`} variant={count ? "accent" : "neutral"} />
         },
     },
@@ -64,19 +73,23 @@ const columns: Column<Specification>[] = [
 ]
 
 const SpecificationList = () => {
-    const { data: specifications = [], isLoading, isError } = useQuery<Specification[]>({
-        queryKey: ["specifications"],
-        queryFn: specificationApi.getAll,
+    const table = useServerTable<SpecificationSortField>({ pageSize: 10 })
+
+    const specificationsQuery = useQuery({
+        queryKey: ["specifications", "list", table.params],
+        queryFn: () => specificationApi.list(table.params),
+        placeholderData: keepPreviousData,
     })
 
     return (
         <Table
-            data={specifications}
+            data={specificationsQuery.data?.data ?? []}
             columns={columns}
             searchable
-            searchKeys={["type", "visaNumber"]}
-            isLoading={isLoading}
-            isError={isError}
+            server={table.tableState(specificationsQuery.data?.pagination, specificationsQuery.isFetching)}
+            isLoading={specificationsQuery.isLoading}
+            isError={specificationsQuery.isError}
+            onRetry={() => void specificationsQuery.refetch()}
             keyExtractor={specification => String(specification.id)}
         />
     )

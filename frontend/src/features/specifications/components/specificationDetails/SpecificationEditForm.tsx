@@ -1,8 +1,7 @@
 import Button from "@/shared/components/atoms/button"
-import type { Designation } from "@/shared/types/designation.types"
-import type { Lot } from "@/shared/types/lot.types"
+import type { Specification } from "@/shared/types/specification.types"
 import { Box, Flex, HStack, Text, VStack } from "@chakra-ui/react"
-import type { FieldErrors, UseFormGetValues, UseFormHandleSubmit, UseFormRegister } from "react-hook-form"
+import type { Control, FieldErrors, UseFormGetValues, UseFormHandleSubmit, UseFormRegister } from "react-hook-form"
 import { FiCalendar, FiCheckCircle, FiFileText, FiLayers, FiSave, FiX } from "react-icons/fi"
 import DepositVisaFields from "../specificationForm/DepositVisaFields"
 import EvaluationFields from "../specificationForm/EvaluationFields"
@@ -13,8 +12,8 @@ import type { SpecificationForm } from "../specificationForm/types"
 import DetailSection from "./DetailSection"
 
 type SpecificationEditFormProps = {
-    availableLots: Lot[]
-    designations: Designation[]
+    control: Control<SpecificationForm>
+    specification: Specification
     errors: FieldErrors<SpecificationForm>
     getValues: UseFormGetValues<SpecificationForm>
     handleSubmit: UseFormHandleSubmit<SpecificationForm>
@@ -25,8 +24,8 @@ type SpecificationEditFormProps = {
 }
 
 const SpecificationEditForm = ({
-    availableLots,
-    designations,
+    control,
+    specification,
     errors,
     getValues,
     handleSubmit,
@@ -52,7 +51,13 @@ const SpecificationEditForm = ({
 
         <VStack gap={8} align="stretch" px={{ base: 5, md: 8 }} py={6}>
             <DetailSection title="Informations generales" icon={<FiFileText />}>
-                <GeneralInformationFields designations={designations} errors={errors} getValues={getValues} register={register} />
+                <GeneralInformationFields
+                    control={control}
+                    selectedDesignation={specification.designation ?? null}
+                    errors={errors}
+                    getValues={getValues}
+                    register={register}
+                />
             </DetailSection>
 
             <DetailSection title="Depot et visa" icon={<FiCalendar />}>
@@ -64,7 +69,7 @@ const SpecificationEditForm = ({
             </DetailSection>
 
             <DetailSection title="Lots associes" icon={<FiLayers />}>
-                <LotCheckboxGrid lots={availableLots} register={register} />
+                <LotCheckboxGrid control={control} knownLots={specification.lots} />
             </DetailSection>
 
             <DetailSection title="Evaluation, attribution et recours" icon={<FiCheckCircle />}>
