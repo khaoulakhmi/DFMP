@@ -10,12 +10,14 @@ export const validate = (schema: ZodType): RequestHandler => {
                 query: req.query,
             });
 
-            if (
-                typeof parsed === "object" &&
-                parsed !== null &&
-                "body" in parsed
-            ) {
-                req.body = parsed.body;
+            if (typeof parsed === "object" && parsed !== null) {
+                if ("body" in parsed) {
+                    req.body = parsed.body;
+                }
+
+                if ("query" in parsed) {
+                    res.locals.validatedQuery = parsed.query;
+                }
             }
 
             next();
