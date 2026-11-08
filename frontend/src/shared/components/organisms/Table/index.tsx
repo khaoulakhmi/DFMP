@@ -1,111 +1,156 @@
-import { useState, useMemo } from "react"
-import { Box, Flex, Spinner, Text } from "@chakra-ui/react"
+import { useEffect, useMemo, useState } from "react"
+import { Box, Flex, HStack, Spinner, Text } from "@chakra-ui/react"
 import { useI18n } from "@/shared/i18n/useI18n"
+import Button from "@/shared/components/atoms/button"
 import TableToolbar    from "./TableToolBar"
 import TableHead       from "./TableHead"
 import TableBody       from "./TableBody"
 import TableEmpty      from "./TableEmpty"
 import TablePagination from "./TablePagination"
-import type { TableProps, SortDirection } from "@/shared/types/table.types"
+import type { Column, TableProps, SortDirection } from "@/shared/types/table.types"
 
+const sortFieldOf = <T,>(column: Column<T>) => column.sortField ?? String(column.key)
+
+/**
+ * Two modes:
+ * - client (default): `data` is the full list; search, sort and paging run locally.
+ * - server (`server` prop): `data` is one page from the API; search, sort and
+ *   paging are sent to the API and the totals come from its pagination metadata.
+ */
 const Table = <T extends Record<string, unknown>>({
     data,
     columns,
     isLoading    = false,
     isError      = false,
+    onRetry,
     searchable   = false,
     searchKeys   = [],
     pageSize     = 10,
+    server,
+    filters,
     keyExtractor = (row: T) => String(row.id ?? JSON.stringify(row)),
     actions,
     onEdit,
-    
 }: TableProps<T>) => {
     const { t } = useI18n()
+    const isServer = server !== undefined
 
-    const [search,      setSearch]      = useState("")
-    const [sortKey,     setSortKey]     = useState<string | null>(null)
-    const [sortDir,     setSortDir]     = useState<SortDirection>(null)
-    const [page,        setPage]        = useState(1)
+    // Client-mode state
+    const [clientSearch,  setClientSearch]  = useState("")
+    const [clientSortKey, setClientSortKey] = useState<string | null>(null)
+    const [clientSortDir, setClientSortDir] = useState<SortDirection>(null)
+    const [clientPage,    setClientPage]    = useState(1)
+
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-    // ── Search ──
+    // ── Client search ──
     const filtered = useMemo(() => {
-        if (!search.trim()) return data
+        if (isServer || !clientSearch.trim()) return data
+        const term = clientSearch.toLowerCase()
         return data.filter(row =>
-            searchKeys.some(key =>
-                String(row[key] ?? "").toLowerCase().includes(search.toLowerCase())
-            )
+            searchKeys.some(key => String(row[key] ?? "").toLowerCase().includes(term))
         )
-    }, [data, search, searchKeys])
+    }, [data, isServer, clientSearch, searchKeys])
 
-    // ── Sort ──
+    // ── Client sort ──
     const sorted = useMemo(() => {
-        if (!sortKey || !sortDir) return filtered
+        if (isServer || !clientSortKey || !clientSortDir) return filtered
         return [...filtered].sort((a, b) => {
-            const aVal = String(a[sortKey] ?? "").toLowerCase()
-            const bVal = String(b[sortKey] ?? "").toLowerCase()
-            return sortDir === "asc"
-                ? aVal.localeCompare(bVal)
-                : bVal.localeCompare(aVal)
+            const aVal = String(a[clientSortKey] ?? "").toLowerCase()
+            const bVal = String(b[clientSortKey] ?? "").toLowerCase()
+            return clientSortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
         })
-    }, [filtered, sortKey, sortDir])
+    }, [filtered, isServer, clientSortKey, clientSortDir])
 
-    // ── Pagination ──
-    const totalPages = Math.ceil(sorted.length / pageSize)
-    const paginated  = sorted.slice((page - 1) * pageSize, page * pageSize)
+    // ── Paging ──
+    const clientTotalPages = Math.ceil(sorted.length / pageSize)
+    // Stay on a valid page when rows are removed from the last one.
+    const clientCurrentPage = Math.min(clientPage, Math.max(clientTotalPages, 1))
 
-    // ── Selected rows ──
-    const selectedRows  = data.filter(row => selectedIds.has(keyExtractor(row)))
-    const allSelected   = paginated.length > 0 && paginated.every(row => selectedIds.has(keyExtractor(row)))
-    const someSelected  = paginated.some(row => selectedIds.has(keyExtractor(row)))
+    const page       = isServer ? server.page : clientCurrentPage
+    const totalPages = isServer ? server.totalPages : clientTotalPages
+    const total      = isServer ? server.total : sorted.length
+    const search     = isServer ? server.search : clientSearch
+    const rows       = isServer
+        ? data
+        : sorted.slice((clientCurrentPage - 1) * pageSize, clientCurrentPage * pageSize)
+
+    // The server sort is held as a backend field; map it back to its column.
+    const sortKey = isServer
+        ? (columns.find(column => sortFieldOf(column) === server.sortBy)?.key as string | undefined) ?? null
+        : clientSortKey
+    const sortDir: SortDirection = isServer ? server.sortOrder : clientSortDir
+
+    // After deleting the last row of the last page, go back one page.
+    const serverPage       = server?.page
+    const serverTotalPages = server?.totalPages
+    const serverFetching   = server?.isFetching
+    const onServerPage     = server?.onPageChange
+    useEffect(() => {
+        if (!onServerPage || serverFetching || serverPage === undefined || serverTotalPages === undefined) return
+        if (serverTotalPages > 0 && serverPage > serverTotalPages) onServerPage(serverTotalPages)
+    }, [onServerPage, serverFetching, serverPage, serverTotalPages])
+
+    // ── Selection (always limited to the rows on screen) ──
+    const selectedRows = rows.filter(row => selectedIds.has(keyExtractor(row)))
+    const allSelected  = rows.length > 0 && rows.every(row => selectedIds.has(keyExtractor(row)))
+    const someSelected = rows.some(row => selectedIds.has(keyExtractor(row)))
+
+    const clearSelection = () => setSelectedIds(new Set())
 
     // ── Handlers ──
+    const goToPage = (next: number) => {
+        clearSelection()
+        if (isServer) server.onPageChange(next)
+        else setClientPage(next)
+    }
+
     const handleSort = (key: string) => {
-        if (sortKey !== key) { setSortKey(key); setSortDir("asc") }
-        else if (sortDir === "asc") setSortDir("desc")
-        else { setSortKey(null); setSortDir(null) }
-        setPage(1)
+        clearSelection()
+        const nextDir: SortDirection = sortKey !== key ? "asc" : sortDir === "asc" ? "desc" : null
+
+        if (isServer) {
+            const column = columns.find(col => String(col.key) === key)
+            server.onSortChange(nextDir && column ? sortFieldOf(column) : null, nextDir)
+            return
+        }
+
+        setClientSortKey(nextDir ? key : null)
+        setClientSortDir(nextDir)
+        setClientPage(1)
     }
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value)
-        setPage(1)
+        clearSelection()
+        if (isServer) {
+            server.onSearchChange(e.target.value)
+            return
+        }
+        setClientSearch(e.target.value)
+        setClientPage(1)
     }
 
     const handleToggleRow = (id: string) => {
         setSelectedIds(prev => {
             const next = new Set(prev)
-            if (next.has(id)) {
-                next.delete(id)
-            } else {
-                next.add(id)
-            }
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
             return next
         })
     }
 
     const handleSelectAll = () => {
-        if (allSelected) {
-            // deselect all on current page
-            setSelectedIds(prev => {
-                const next = new Set(prev)
-                paginated.forEach(row => next.delete(keyExtractor(row)))
-                return next
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            rows.forEach(row => {
+                if (allSelected) next.delete(keyExtractor(row))
+                else next.add(keyExtractor(row))
             })
-        } else {
-            // select all on current page
-            setSelectedIds(prev => {
-                const next = new Set(prev)
-                paginated.forEach(row => next.add(keyExtractor(row)))
-                return next
-            })
-        }
+            return next
+        })
     }
 
-    const handleClearSelect = () => setSelectedIds(new Set())
-
-    // ── Loading ──
+    // ── Loading (first load only; later fetches keep the rows visible) ──
     if (isLoading) return (
         <Flex justify="center" align="center" h="48" bg="white" borderRadius="xl" border="1px solid" borderColor="neutral.200">
             <Flex direction="column" align="center" gap={3}>
@@ -115,30 +160,62 @@ const Table = <T extends Record<string, unknown>>({
         </Flex>
     )
 
-    // ── Error ──
-    if (isError) return (
-        <Box p={6} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl">
+    // ── Error with nothing to show ──
+    if (isError && rows.length === 0) return (
+        <Flex
+            p={6} gap={4} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl"
+            align={{ base: "stretch", sm: "center" }} justify="space-between" direction={{ base: "column", sm: "row" }}
+        >
             <Text color="error.600" fontSize="sm" fontWeight="medium">
                 {t("common.failedToLoad")}
             </Text>
-        </Box>
+            {onRetry && (
+                <Box w={{ base: "full", sm: "32" }}>
+                    <Button variant="secondary" size="sm" onClick={onRetry}>{t("common.retry")}</Button>
+                </Box>
+            )}
+        </Flex>
     )
+
+    const searchInputValue = isServer ? server.searchInput : clientSearch
+    const isFiltered = Boolean(search) || Boolean(server?.hasActiveFilters)
+    const showPagination = isServer ? total > 0 : totalPages > 1
 
     return (
         <Box bg="white" borderRadius="xl" border="1px solid" borderColor="neutral.200" overflow="hidden" boxShadow="sm" minW={0}>
 
             <TableToolbar
-                total={sorted.length}
+                total={total}
                 search={search}
+                searchValue={searchInputValue}
                 searchable={searchable}
                 selectedRows={selectedRows}
-                onClearSelect={handleClearSelect}
+                filters={filters}
+                onClearSelect={clearSelection}
                 onChange={handleSearch}
-                {...(onEdit   && { onEdit })}    // 👈 only pass if defined
-                {...(actions  && { actions })}   //
+                {...(onEdit   && { onEdit })}
+                {...(actions  && { actions })}
             />
 
-            <Box overflowX="auto" w="full">
+            {/* Refetch failed, but older rows are still on screen */}
+            {isError && (
+                <HStack px={{ base: 4, md: 6 }} py={2} bg="error.50" borderBottom="1px solid" borderColor="error.200" justify="space-between">
+                    <Text color="error.600" fontSize="xs">{t("common.refreshFailed")}</Text>
+                    {onRetry && (
+                        <Box w="28">
+                            <Button variant="ghost" size="sm" onClick={onRetry}>{t("common.retry")}</Button>
+                        </Box>
+                    )}
+                </HStack>
+            )}
+
+            <Box
+                overflowX="auto"
+                w="full"
+                opacity={server?.isFetching ? 0.6 : 1}
+                transition="opacity 0.15s"
+                aria-busy={server?.isFetching || undefined}
+            >
                 <table style={{ width: "100%", minWidth: "720px", borderCollapse: "collapse" }}>
                     <TableHead
                         columns={columns}
@@ -151,7 +228,7 @@ const Table = <T extends Record<string, unknown>>({
                         onSelectAll={handleSelectAll}
                     />
                     <TableBody
-                        rows={paginated}
+                        rows={rows}
                         columns={columns}
                         selectedIds={selectedIds}
                         deleteId={null}
@@ -161,15 +238,24 @@ const Table = <T extends Record<string, unknown>>({
                 </table>
             </Box>
 
-            {paginated.length === 0 && <TableEmpty search={search} />}
+            {rows.length === 0 && <TableEmpty search={search} filtered={isFiltered} />}
 
-            {totalPages > 1 && (
+            {showPagination && (
                 <TablePagination
                     page={page}
-                    totalPages={totalPages}
-                    onPrev={() => setPage(p => p - 1)}
-                    onNext={() => setPage(p => p + 1)}
-                    onPage={setPage}
+                    totalPages={Math.max(totalPages, 1)}
+                    total={total}
+                    pageSize={isServer ? server.pageSize : pageSize}
+                    onPrev={() => goToPage(page - 1)}
+                    onNext={() => goToPage(page + 1)}
+                    onPage={goToPage}
+                    {...(isServer && server.onPageSizeChange && {
+                        pageSizeOptions: server.pageSizeOptions,
+                        onPageSizeChange: (next: number) => {
+                            clearSelection()
+                            server.onPageSizeChange?.(next)
+                        },
+                    })}
                 />
             )}
         </Box>

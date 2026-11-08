@@ -1,4 +1,5 @@
 import { Box, Flex, HStack, Text } from "@chakra-ui/react"
+import type { ReactNode } from "react"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import Button from "@/shared/components/atoms/button"
 import type { TableAction } from "@/shared/types/table.types"
@@ -7,8 +8,12 @@ import { useI18n } from "@/shared/i18n/useI18n"
 // TableToolbar.tsx
 interface TableToolbarProps<T> {
     total:          number
+    // Search that produced the current rows (shown in the count).
     search:         string
+    // What is typed in the box; can run ahead of `search` while debouncing.
+    searchValue?:   string
     searchable:     boolean
+    filters?:       ReactNode
     selectedRows:   T[]
     actions?:       TableAction<T>[]    // 👈 ? instead of no ?
     onEdit?:        (row: T) => void    // 👈 ? instead of no ?
@@ -19,7 +24,9 @@ interface TableToolbarProps<T> {
 const TableToolbar = <T extends Record<string, unknown>>({
     total,
     search,
+    searchValue,
     searchable,
+    filters,
     selectedRows,
     actions,
     onEdit,
@@ -111,14 +118,20 @@ const TableToolbar = <T extends Record<string, unknown>>({
                     }
                 </HStack>
             ) : (
-                searchable && (
-                    <Box w={{ base: "full", sm: "64" }}>
-                        <TextField
-                            placeholder={t("common.searchPlaceholder")}
-                            value={search}
-                            onChange={onChange}
-                        />
-                    </Box>
+                (searchable || filters) && (
+                    <HStack gap={2} flexWrap="wrap" justify={{ base: "stretch", sm: "flex-end" }}>
+                        {filters}
+                        {searchable && (
+                            <Box w={{ base: "full", sm: "64" }}>
+                                <TextField
+                                    placeholder={t("common.searchPlaceholder")}
+                                    value={searchValue ?? search}
+                                    onChange={onChange}
+                                    aria-label={t("common.searchPlaceholder")}
+                                />
+                            </Box>
+                        )}
+                    </HStack>
                 )
             )}
         </Flex>
