@@ -66,21 +66,74 @@ const AddExistingProductModal = ({ open, onClose, lotId }: Props) => {
     }
 
     const assignMutation = useMutation({
-        mutationFn: (productIds: number[]) =>
-            Promise.all(productIds.map(productId => productApi.update(productId, { lotId }))),
-        onSettled: () => {
-            // Some updates may have succeeded even if one failed.
-            void queryClient.invalidateQueries({ queryKey: ["lots"] })
-            void queryClient.invalidateQueries({ queryKey: ["products"] })
-            void queryClient.invalidateQueries({ queryKey: ["designations"] })
+        mutationFn: async (productIds: number[]) => {
+            const results = await Promise.allSettled(
+                productIds.map(productId =>
+                    productApi.update(productId, { lotId })
+                )
+            )
+
+            const failedIds = productIds.filter(
+                (_, index) => results[index]?.status === "rejected"
+            )
+
+            return {
+                succeeded: productIds.length - failedIds.length,
+                failedIds,
+            }
         },
-        onSuccess: () => handleClose(),
+
+        onSuccess: ({ succeeded, failedIds }) => {
+            if (failedIds.length === 0) {
+                toaster.create({
+                    title: "Products assigned",
+                    description: `${succeeded} product(s) assigned.`,
+                    type: "success",
+                })
+
+                handleClose()
+                return
+            }
+
+            // Keep only failed products selected so the user can retry them.
+            setSelected(previous => {
+                const next = new Map<number, Product>()
+
+                for (const id of failedIds) {
+                    const product = previous.get(id)
+
+                    if (product) {
+                        next.set(id, product)
+                    }
+                }
+
+                return next
+            })
+
+            toaster.create({
+                title: "Some products could not be assigned",
+                description:
+                    `${succeeded} assigned, ${failedIds.length} failed. ` +
+                    "The failed products remain selected for retry.",
+                type: "warning",
+            })
+        },
+
         onError: () => {
             toaster.create({
-                title: "Erreur",
-                description: "Impossible d'affecter tous les produits. Veuillez réessayer.",
+                title: "Assignment failed",
+                description: "An unexpected error occurred. Please try again.",
                 type: "error",
             })
+        },
+
+        onSettled: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["lots"] }),
+                queryClient.invalidateQueries({ queryKey: ["products"] }),
+                queryClient.invalidateQueries({ queryKey: ["designations"] }),
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+            ])
         },
     })
 
