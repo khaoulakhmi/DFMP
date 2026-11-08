@@ -5,7 +5,9 @@ import {
     notFoundError,
 } from "../../utils/AppError";
 import { runSerializableTransaction } from "../../utils/transaction";
-
+import type { Prisma } from "../../generated/prisma/client";
+import type { LotListQuery } from "./lot.validation";
+import { pageToSkip, paginate } from "../../utils/pagination";
 
 export const LotService = {
     createLot: async (lotData: CreateLotDTO) => {
@@ -110,19 +112,68 @@ export const LotService = {
         });
     },
 
-    getAllLots: async () => {
-        // Logic to get all lots
-        return await prisma.lot.findMany({
-            include: {
-                designation: true,
-                products: true,
-                specifications: {
+    getAllLots: async (query: LotListQuery) => {
+        const {
+            page,
+            pageSize,
+            search,
+            designationId,
+            specificationsId,
+            hasSpecification,
+            sortBy,
+            sortOrder,
+        } = query;
+
+        const where: Prisma.LotWhereInput = {};
+
+        if (search) {
+            where.name = {
+                contains: search,
+                mode: "insensitive",
+            };
+        }
+
+        if (designationId !== undefined) {
+            where.designationId = designationId;
+        }
+
+        if (specificationsId !== undefined) {
+            where.specificationsId = specificationsId;
+        }
+
+        if (hasSpecification !== undefined) {
+            where.specificationsId = hasSpecification ? { not: null } : null;
+        }
+
+        const orderBy: Prisma.LotOrderByWithRelationInput[] = [
+            { [sortBy]: sortOrder },
+            { id: "asc" },
+        ];
+
+        const [data, total] = await prisma.$transaction(
+            [
+                prisma.lot.findMany({
+                    where,
+                    orderBy,
+                    skip: pageToSkip(page, pageSize),
+                    take: pageSize,
+                    // Lists only need counts and summaries; the detail
+                    // endpoint returns the full product list.
                     include: {
-                        tendering: true,
+                        designation: true,
+                        specifications: {
+                            include: {
+                                tendering: true,
+                            },
+                        },
+                        _count: { select: { products: true } },
                     },
-                },
-            },
-            orderBy: { id: "desc" }
-        });
-    }
+                }),
+                prisma.lot.count({ where }),
+            ],
+            { isolationLevel: "RepeatableRead" },
+        );
+
+        return paginate(data, total, page, pageSize);
+    },
 }

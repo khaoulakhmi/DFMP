@@ -4,7 +4,7 @@ import { Role } from "../../generated/prisma/enums";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/role.middleware";
 import { validate } from "../../middlewares/validate.middleware";
-import { createLotSchema, lotIdSchema, updateLotSchema } from "./lot.validation";
+import { createLotSchema, getLotsSchema, lotIdSchema, updateLotSchema } from "./lot.validation";
 
 
 const LotRouter = Router();
@@ -44,6 +44,7 @@ LotRouter.get(
     '/',
     authenticate,
     authorizeLotAccess,
+    validate(getLotsSchema),
     LotController.getAllLots,
 );
 

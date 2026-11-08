@@ -3,6 +3,7 @@ import { LotService } from "./lot.service";
 import { notFoundError } from "../../utils/AppError";
 import { parseIntIdParam } from "../../utils/id";
 import { createPrismaErrorMapper } from "../../utils/prismaError";
+import type { LotListQuery } from "./lot.validation";
 
 const mapPrismaError = createPrismaErrorMapper("Lot");
 
@@ -49,12 +50,19 @@ export const LotController = {
         }
     },
 
-    getAllLots: async (req: Request, res: Response, next: NextFunction) => {
+    getAllLots: async (
+        req: Request,
+        res: Response<unknown, { validatedQuery: LotListQuery }>,
+        next: NextFunction,
+        ) => {
         try {
-            const lots = await LotService.getAllLots();
-            res.status(200).json(lots);
-        } catch (error) {
+            const result = await LotService.getAllLots(
+                res.locals.validatedQuery,
+            );
+
+            res.status(200).json(result);
+        } catch (error: unknown) {
             next(error);
         }
-    },
+        },
 };
