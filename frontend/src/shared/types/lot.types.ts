@@ -11,6 +11,8 @@ export type Lot = {
     designation?: Designation
     products?: Product[]
     specifications?: SpecificationSummary | null
+    // Present on list responses, which omit the full product list.
+    _count?: { products: number }
 }
 
 export type CreateLotDTO = {
