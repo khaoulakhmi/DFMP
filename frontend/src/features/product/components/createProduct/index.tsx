@@ -1,13 +1,11 @@
 import type { StepperItem } from "@/shared/components/molecules/stepper"
-import { designationApi } from "@/api/designation.api"
 import { productApi } from "@/api/product.api"
 import Button from "@/shared/components/atoms/button"
 import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNavigation"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
-import type { Designation } from "@/shared/types/designation.types"
 import { TVA, type CreateProductDTO } from "@/shared/types/product.types"
-import { Box, Flex, HStack, Heading, Spinner, Text, VStack } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Box, Flex, HStack, Heading, Text, VStack } from "@chakra-ui/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState, type MouseEvent } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { FiDollarSign, FiPackage, FiSliders } from "react-icons/fi"
@@ -70,11 +68,6 @@ const CreateProductPage = () => {
         },
     })
 
-    const { data: designations = [] as Designation[], isLoading, isError } = useQuery<Designation[]>({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
-    })
-
     const unitPrice = Number(useWatch({ control, name: "unitPrice" }) || 0)
     const providerPrice = Number(useWatch({ control, name: "providerPrice" }) || 0)
     const tva = useWatch({ control, name: "tva" })
@@ -89,6 +82,7 @@ const CreateProductPage = () => {
         onSuccess: (product) => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
             queryClient.invalidateQueries({ queryKey: ["lots"] })
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Product created",
                 description: `${product.name} has been created successfully.`,
@@ -113,8 +107,8 @@ const CreateProductPage = () => {
             content: (
                 <GeneralInfo
                     register={register}
+                    control={control}
                     errors={errors}
-                    designations={designations}
                     unitOptions={UNIT_OPTIONS}
                 />
             ),
@@ -145,7 +139,7 @@ const CreateProductPage = () => {
                 />
             ),
         },
-    ], [designations, errors, margin, priceTtc, register, unit])
+    ], [control, errors, margin, priceTtc, register, unit])
 
     const goNext = async () => {
         const fields = stepFields[activeStep]
@@ -190,22 +184,6 @@ const CreateProductPage = () => {
         }
 
         createMutation.mutate(payload)
-    }
-
-    if (isLoading) {
-        return (
-            <Flex h="64" align="center" justify="center">
-                <Spinner color="primary.500" />
-            </Flex>
-        )
-    }
-
-    if (isError) {
-        return (
-            <Box p={6} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl">
-                <Text color="error.600" fontWeight="medium">Failed to load designations.</Text>
-            </Box>
-        )
     }
 
     return (

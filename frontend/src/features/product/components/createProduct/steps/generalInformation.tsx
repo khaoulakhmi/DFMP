@@ -1,14 +1,14 @@
 import { Box, Separator, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import SelectField from "@/shared/components/molecules/Forms/selectField"
-import type { UseFormRegister, FieldErrors } from "react-hook-form"
+import DesignationSelect from "@/shared/components/molecules/Forms/DesignationSelect"
+import { Controller, type Control, type UseFormRegister, type FieldErrors } from "react-hook-form"
 import type { ProductForm } from "../types"
-import type { Designation } from "@/shared/types/designation.types"
 
 interface GeneralStepProps {
     register: UseFormRegister<ProductForm>
+    control: Control<ProductForm>
     errors: FieldErrors<ProductForm>
-    designations: Designation[]
     unitOptions: string[]
 }
 
@@ -16,8 +16,8 @@ const required = (label: string) => `${label} is required`
 
 const GeneralStep = ({
     register,
+    control,
     errors,
-    designations,
     unitOptions,
 }: GeneralStepProps) => {
     return (
@@ -62,23 +62,23 @@ const GeneralStep = ({
                 </SelectField>
             </SimpleGrid>
 
-            <SelectField
-                label="Designation"
-                error={errors.designationId?.message}
-                required
-                showRequiredIndicator
-                {...register("designationId", {
-                    required: required("Designation"),
-                })}
-            >
-                <option value="">Select designation</option>
-
-                {designations.map((d) => (
-                    <option key={d.id} value={d.id}>
-                        {d.name}
-                    </option>
-                ))}
-            </SelectField>
+            <Controller
+                control={control}
+                name="designationId"
+                rules={{ required: required("Designation") }}
+                render={({ field }) => (
+                    <DesignationSelect
+                        label="Designation"
+                        placeholder="Select designation"
+                        error={errors.designationId?.message}
+                        required
+                        showRequiredIndicator
+                        value={field.value}
+                        onChange={designation => field.onChange(designation ? String(designation.id) : "")}
+                        onBlur={field.onBlur}
+                    />
+                )}
+            />
 
             <Box
                 px={3}

@@ -2,15 +2,15 @@ import { productApi } from "@/api/product.api"
 import Button from "@/shared/components/atoms/button"
 import TextField from "@/shared/components/molecules/Forms/textField"
 import SelectField from "@/shared/components/molecules/Forms/selectField"
+import DesignationSelect from "@/shared/components/molecules/Forms/DesignationSelect"
+import LotSelect from "@/shared/components/molecules/Forms/LotSelect"
 import Modal from "@/shared/components/molecules/modal"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
-import type { Designation } from "@/shared/types/designation.types"
-import type { Lot } from "@/shared/types/lot.types"
 import { TVA, type CreateProductDTO } from "@/shared/types/product.types"
 import { Box, HStack, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
-import { useForm, useWatch } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 
 const required = (label: string) => `${label} is required`
 
@@ -30,8 +30,6 @@ type ProductForm = {
 interface CreateProductModalProps {
     open: boolean
     onClose: () => void
-    designations: Designation[]
-    lots: Lot[]
     defaultDesignationId?: number | null
     defaultLotId?: number | null
 }
@@ -39,8 +37,6 @@ interface CreateProductModalProps {
 const CreateProductModal = ({
     open,
     onClose,
-    designations,
-    lots,
     defaultDesignationId,
     defaultLotId,
 }: CreateProductModalProps) => {
@@ -65,7 +61,6 @@ const CreateProductModal = ({
     const unitPrice = Number(useWatch({ control, name: "unitPrice" }) || 0)
     const providerPrice = Number(useWatch({ control, name: "providerPrice" }) || 0)
     const tva = useWatch({ control, name: "tva" })
-    const filteredLots = lots.filter(lot => lot.designationId === Number(designationId))
     const tvaRate = tva === TVA.NINETEEN ? 0.19 : tva === TVA.NINE ? 0.09 : 0
     const priceTtc = unitPrice * (1 + tvaRate)
 
@@ -86,18 +81,13 @@ const CreateProductModal = ({
         }
     }, [defaultDesignationId, defaultLotId, open, reset])
 
-    useEffect(() => {
-        if (!designationId) return
-        const currentLotId = control._formValues.lotId
-        if (!filteredLots.some(lot => String(lot.id) === currentLotId)) {
-            setValue("lotId", filteredLots[0] ? String(filteredLots[0].id) : "")
-        }
-    }, [control._formValues.lotId, designationId, filteredLots, setValue])
 
     const createMutation = useMutation({
         mutationFn: productApi.create,
         onSuccess: (product) => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
+            queryClient.invalidateQueries({ queryKey: ["lots"] })
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Product created",
                 description: `${product.name} has been created successfully.`,
@@ -163,15 +153,49 @@ const CreateProductModal = ({
                     <TextField label="Product name" error={errors.name?.message} required showRequiredIndicator {...register("name", { required: required("Product name") })} />
                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                         <TextField label="Unit" error={errors.unit?.message} required showRequiredIndicator {...register("unit", { required: required("Unit") })} />
-                        <SelectField label="Designation" error={errors.designationId?.message} required showRequiredIndicator {...register("designationId", { required: required("Designation") })}>
-                            <option value="">Select designation</option>
-                            {designations.map(designation => <option key={designation.id} value={designation.id}>{designation.name}</option>)}
-                        </SelectField>
+                        <Controller
+                            control={control}
+                            name="designationId"
+                            rules={{ required: required("Designation") }}
+                            render={({ field }) => (
+                                <DesignationSelect
+                                    label="Designation"
+                                    placeholder="Select designation"
+                                    error={errors.designationId?.message}
+                                    required
+                                    showRequiredIndicator
+                                    value={field.value}
+                                    onChange={designation => {
+                                        const next = designation ? String(designation.id) : ""
+                                        // Lots belong to one designation, so a new
+                                        // designation needs a new lot choice.
+                                        if (next !== field.value) setValue("lotId", "", { shouldValidate: false })
+                                        field.onChange(next)
+                                    }}
+                                    onBlur={field.onBlur}
+                                />
+                            )}
+                        />
                     </SimpleGrid>
-                    <SelectField label="Lot" error={errors.lotId?.message} required showRequiredIndicator {...register("lotId", { required: required("Lot") })}>
-                        <option value="">Select lot</option>
-                        {filteredLots.map(lot => <option key={lot.id} value={lot.id}>{lot.name}</option>)}
-                    </SelectField>
+                    <Controller
+                        control={control}
+                        name="lotId"
+                        rules={{ required: required("Lot") }}
+                        render={({ field }) => (
+                            <LotSelect
+                                label="Lot"
+                                placeholder={designationId ? "Select lot" : "Select a designation first"}
+                                designationId={designationId ? Number(designationId) : null}
+                                disabled={!designationId}
+                                error={errors.lotId?.message}
+                                required
+                                showRequiredIndicator
+                                value={field.value}
+                                onChange={lot => field.onChange(lot ? String(lot.id) : "")}
+                                onBlur={field.onBlur}
+                            />
+                        )}
+                    />
                     <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
                         <TextField label="Unit price" type="number" error={errors.unitPrice?.message} required showRequiredIndicator {...register("unitPrice", { required: required("Unit price"), valueAsNumber: true })} />
                         <TextField label="Provider price" type="number" error={errors.providerPrice?.message} required showRequiredIndicator {...register("providerPrice", { required: required("Provider price"), valueAsNumber: true })} />

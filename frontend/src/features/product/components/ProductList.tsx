@@ -1,10 +1,13 @@
-import { productApi } from "@/api/product.api"
+import { productApi, type ProductSortField } from "@/api/product.api"
 import Badge from "@/shared/components/atoms/badge"
+import FilterSelect from "@/shared/components/molecules/FilterSelect"
 import Table from "@/shared/components/organisms/Table"
+import { useServerTable } from "@/shared/hooks/useServerTable"
+import { useI18n } from "@/shared/i18n/useI18n"
 import type { Product, TVA } from "@/shared/types/product.types"
 import type { Column } from "@/shared/types/table.types"
 import { Text, VStack } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useNavigate, Link as RouterLink} from "react-router-dom"
 
 const tvaLabels: Record<TVA, string> = {
@@ -24,7 +27,7 @@ const columns: Column<Product>[] = [
                     <RouterLink to={`/products/${row.id}`}>{String(value)}</RouterLink>    
                 </Text>
                 <Text fontSize="xs" color="neutral.500">
-                    {row.lot?.name ?? `Lot ${row.lotId}`} - {row.designation?.name ?? `Designation ${row.designationId}`}
+                    {row.lot?.name ?? (row.lotId ? `Lot ${row.lotId}` : "No lot")} - {row.designation?.name ?? `Designation ${row.designationId}`}
                 </Text>
             </VStack>
         ),
@@ -53,12 +56,20 @@ const columns: Column<Product>[] = [
     },
 ]
 
+type ProductFilters = { tva?: TVA }
+
 const ProductList = () => {
     const navigate = useNavigate()
-    const { data: products = [] as Product[], isLoading, isError } = useQuery<Product[]>({
-        queryKey: ["products"],
-        queryFn: productApi.getAll,
+    const { t } = useI18n()
+    const table = useServerTable<ProductSortField, ProductFilters>({ pageSize: 10 })
+
+    const productsQuery = useQuery({
+        queryKey: ["products", "list", table.params],
+        queryFn: () => productApi.list(table.params),
+        placeholderData: keepPreviousData,
     })
+
+    const products = productsQuery.data?.data ?? []
 
     return (
         <VStack align="stretch" gap={4}>
@@ -67,9 +78,21 @@ const ProductList = () => {
                 data={products}
                 columns={columns}
                 searchable
-                searchKeys={["name", "unit"]}
-                isLoading={isLoading}
-                isError={isError}
+                server={table.tableState(productsQuery.data?.pagination, productsQuery.isFetching)}
+                filters={(
+                    <FilterSelect
+                        label="TVA"
+                        value={table.filters.tva ?? ""}
+                        onChange={value => table.setFilter("tva", value ? value as TVA : undefined)}
+                        options={[
+                            { value: "", label: t("common.all") },
+                            ...(Object.keys(tvaLabels) as TVA[]).map(tva => ({ value: tva, label: tvaLabels[tva] })),
+                        ]}
+                    />
+                )}
+                isLoading={productsQuery.isLoading}
+                isError={productsQuery.isError}
+                onRetry={() => void productsQuery.refetch()}
                 keyExtractor={product => String(product.id)}
                 onEdit={product => navigate(`/products/${product.id}/edit`)}
             />

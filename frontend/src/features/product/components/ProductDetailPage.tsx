@@ -34,6 +34,9 @@ const ProductDetailPage = () => {
         mutationFn: () => productApi.delete(Number(id)),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
+            // Lot and designation rows show product counts.
+            queryClient.invalidateQueries({ queryKey: ["lots"] })
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Product deleted",
                 description: `${product?.name ?? "Product"} has been deleted.`,

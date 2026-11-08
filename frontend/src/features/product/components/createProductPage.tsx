@@ -5,15 +5,14 @@ import TextField from "@/shared/components/molecules/Forms/textField"
 import SelectField from "@/shared/components/molecules/Forms/selectField"
 import BreadcrumbNavigation from "@/shared/components/molecules/breadcrumbNavigation"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
-import type { Designation } from "@/shared/types/designation.types"
+import DesignationSelect from "@/shared/components/molecules/Forms/DesignationSelect"
 import { TVA, type CreateProductDTO } from "@/shared/types/product.types"
 import {
     Box, HStack, SimpleGrid, Text, VStack, Heading, Separator
 } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useForm, useWatch } from "react-hook-form"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { designationApi } from "@/api/designation.api"
 
 const required = (label: string) => `${label} is required`
 
@@ -41,10 +40,6 @@ type ProductForm = {
 const CreateProductPage = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
-    const { data: designations = [] } = useQuery({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
-    })
     const [searchParams] = useSearchParams()
     const defaultDesignationId = searchParams.get("designationId") ?? ""
 
@@ -81,6 +76,7 @@ const CreateProductPage = () => {
         mutationFn: productApi.create,
         onSuccess: (product) => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
+            queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Product created",
                 description: `${product.name} has been created successfully.`,
@@ -170,18 +166,23 @@ const CreateProductPage = () => {
                                 ))}
                             </SelectField>
                         </SimpleGrid>
-                        <SelectField
-                            label="Designation"
-                            error={errors.designationId?.message}
-                            required
-                            showRequiredIndicator
-                            {...register("designationId", { required: required("Designation") })}
-                        >
-                            <option value="">Select designation</option>
-                            {designations.map((d: Designation) => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                        </SelectField>
+                        <Controller
+                            control={control}
+                            name="designationId"
+                            rules={{ required: required("Designation") }}
+                            render={({ field }) => (
+                                <DesignationSelect
+                                    label="Designation"
+                                    placeholder="Select designation"
+                                    error={errors.designationId?.message}
+                                    required
+                                    showRequiredIndicator
+                                    value={field.value}
+                                    onChange={designation => field.onChange(designation ? String(designation.id) : "")}
+                                    onBlur={field.onBlur}
+                                />
+                            )}
+                        />
                         <Box
                             px={3} py={2} bg="blue.50" borderRadius="md"
                             borderLeft="3px solid" borderColor="blue.400"
