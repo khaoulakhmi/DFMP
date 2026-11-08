@@ -87,9 +87,26 @@ const Table = <T extends Record<string, unknown>>({
     const serverFetching   = server?.isFetching
     const onServerPage     = server?.onPageChange
     useEffect(() => {
-        if (!onServerPage || serverFetching || serverPage === undefined || serverTotalPages === undefined) return
-        if (serverTotalPages > 0 && serverPage > serverTotalPages) onServerPage(serverTotalPages)
-    }, [onServerPage, serverFetching, serverPage, serverTotalPages])
+        if (
+            !onServerPage ||
+            serverFetching ||
+            serverPage === undefined ||
+            serverTotalPages === undefined
+        ) {
+            return
+        }
+
+        const lastValidPage = Math.max(serverTotalPages, 1)
+
+        if (serverPage > lastValidPage) {
+            onServerPage(lastValidPage)
+        }
+    }, [
+        onServerPage,
+        serverFetching,
+        serverPage,
+        serverTotalPages,
+    ])
 
     // ── Selection (always limited to the rows on screen) ──
     const selectedRows = rows.filter(row => selectedIds.has(keyExtractor(row)))
