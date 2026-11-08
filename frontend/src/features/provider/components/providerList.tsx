@@ -221,21 +221,40 @@ const ProviderList = () => {
     const providers = providersQuery.data?.data ?? []
 
     const deleteMutation = useMutation({
-        mutationFn: (rows: Provider[]) =>
-            Promise.all(rows.map(provider => providerApi.delete(provider.id))),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["providers"] })
+        mutationFn: async (rows: Provider[]) => {
+            const results = await Promise.allSettled(
+                rows.map(provider => providerApi.delete(provider.id))
+            )
+
+            return {
+                succeeded: results.filter(result => result.status === "fulfilled").length,
+                failed: results.filter(result => result.status === "rejected").length,
+            }
+        },
+
+        onSuccess: ({ succeeded, failed }) => {
             toaster.create({
-                title: t("providers.successDelete"),
-                type: "success",
+                title: failed === 0
+                    ? "Providers deleted"
+                    : "Some providers could not be deleted",
+                description: `${succeeded} deleted, ${failed} failed.`,
+                type: failed === 0 ? "success" : "warning",
             })
         },
+
         onError: () => {
             toaster.create({
-                title: "Error",
-                description: t("providers.errorDelete"),
+                title: "Deletion failed",
+                description: "An unexpected error occurred. Please try again.",
                 type: "error",
             })
+        },
+
+        onSettled: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["providers"] }),
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+            ])
         },
     })
 
