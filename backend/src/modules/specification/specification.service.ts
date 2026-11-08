@@ -5,6 +5,9 @@ import {
     notFoundError,
 } from "../../utils/AppError";
 import { runSerializableTransaction } from "../../utils/transaction";
+import type { Prisma } from "../../generated/prisma/client";
+import { pageToSkip, paginate } from "../../utils/pagination";
+import type { SpecificationListQuery } from "./specification.validation";
 
 const toDate = (value?: string | Date | null) => {
     if (!value) return null;
@@ -69,14 +72,70 @@ export const SpecificationService = {
         });
     },
 
-    getAllSpecifications: async () => {
-        return prisma.specifications.findMany({
-            include,
-            orderBy: [
-                { year: "desc" },
-                { id: "desc" },
+    getAllSpecifications: async (query: SpecificationListQuery) => {
+        const {
+            page,
+            pageSize,
+            search,
+            designationId,
+            year,
+            type,
+            hasTendering,
+            sortBy,
+            sortOrder,
+        } = query;
+
+        const where: Prisma.SpecificationsWhereInput = {};
+
+        if (search) {
+            where.OR = [
+                { type: { contains: search, mode: "insensitive" } },
+                { visaNumber: { contains: search, mode: "insensitive" } },
+                { designation: { name: { contains: search, mode: "insensitive" } } },
+            ];
+        }
+
+        if (designationId !== undefined) {
+            where.designationId = designationId;
+        }
+
+        if (year !== undefined) {
+            where.year = year;
+        }
+
+        if (type !== undefined) {
+            where.type = type;
+        }
+
+        if (hasTendering !== undefined) {
+            where.tendering = hasTendering ? { isNot: null } : { is: null };
+        }
+
+        const orderBy: Prisma.SpecificationsOrderByWithRelationInput[] =
+            sortBy === "id"
+                ? [{ id: sortOrder }]
+                : [{ [sortBy]: sortOrder }, { id: "asc" }];
+
+        const [data, total] = await prisma.$transaction(
+            [
+                prisma.specifications.findMany({
+                    where,
+                    orderBy,
+                    skip: pageToSkip(page, pageSize),
+                    take: pageSize,
+                    // The list shows counts; the detail endpoint returns lots.
+                    include: {
+                        designation: true,
+                        tendering: true,
+                        _count: { select: { lots: true } },
+                    },
+                }),
+                prisma.specifications.count({ where }),
             ],
-        });
+            { isolationLevel: "RepeatableRead" },
+        );
+
+        return paginate(data, total, page, pageSize);
     },
 
     getSpecificationById: async (id: number) => {

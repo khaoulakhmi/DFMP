@@ -2,6 +2,12 @@ import z from "zod";
 import { AVSStatus } from "../../generated/prisma/enums";
 import { intIdParams, intIdParamsSchema, intIdSchema } from "../../utils/id";
 import { amountSchema } from "../../utils/amount";
+import {
+    booleanQuery,
+    paginationQueryShape,
+    positiveIntegerQuery,
+    sortOrderSchema,
+} from "../../utils/pagination";
 
 const optionalDate = z.union([z.string(), z.date()]).nullable().optional();
 const nullableText = z.string().trim().nullable().optional();
@@ -69,3 +75,24 @@ export const updateSpecificationSchema = z.object({
 });
 
 export const specificationIdSchema = intIdParamsSchema;
+
+export const specificationListQuerySchema = z.object({
+    ...paginationQueryShape,
+
+    designationId: positiveIntegerQuery.optional(),
+    year: positiveIntegerQuery.pipe(z.number().min(2000).max(2100)).optional(),
+    type: z.string().trim().min(1).max(20).optional(),
+    hasTendering: booleanQuery.optional(),
+
+    sortBy: z
+        .enum(["year", "type", "minAmount", "maxAmount", "id"])
+        .default("year"),
+    sortOrder: sortOrderSchema.default("desc"),
+}).strict();
+
+export const getSpecificationsSchema = z.object({
+    query: specificationListQuerySchema,
+});
+
+export type SpecificationListQuery =
+    z.infer<typeof specificationListQuerySchema>;

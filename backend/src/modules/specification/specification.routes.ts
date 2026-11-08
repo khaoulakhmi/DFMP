@@ -4,7 +4,7 @@ import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize } from "../../middlewares/role.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { SpecificationController } from "./specification.controller";
-import { createSpecificationSchema, specificationIdSchema, updateSpecificationSchema } from "./specification.validation";
+import { createSpecificationSchema, getSpecificationsSchema, specificationIdSchema, updateSpecificationSchema } from "./specification.validation";
 
 const SpecificationRouter = Router();
 
@@ -40,6 +40,7 @@ SpecificationRouter.get(
     "/",
     authenticate,
     authorize(Role.ADMIN, Role.FINANCE, Role.ACCOUNTANT, Role.SALES),
+    validate(getSpecificationsSchema),
     SpecificationController.getAllSpecifications,
 );
 

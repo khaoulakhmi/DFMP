@@ -3,6 +3,7 @@ import { SpecificationService } from "./specification.service";
 import { notFoundError } from "../../utils/AppError";
 import { parseIntIdParam } from "../../utils/id";
 import { createPrismaErrorMapper } from "../../utils/prismaError";
+import type { SpecificationListQuery } from "./specification.validation";
 
 const mapPrismaError = createPrismaErrorMapper("Specification");
 
@@ -16,10 +17,16 @@ export const SpecificationController = {
         }
     },
 
-    getAllSpecifications: async (_req: Request, res: Response, next: NextFunction) => {
+    getAllSpecifications: async (
+        _req: Request,
+        res: Response<unknown, { validatedQuery: SpecificationListQuery }>,
+        next: NextFunction,
+    ) => {
         try {
-            const specifications = await SpecificationService.getAllSpecifications();
-            res.status(200).json(specifications);
+            const result = await SpecificationService.getAllSpecifications(
+                res.locals.validatedQuery,
+            );
+            res.status(200).json(result);
         } catch (error) {
             next(error);
         }
