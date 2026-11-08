@@ -6,6 +6,7 @@ import TextField from "@/shared/components/molecules/Forms/textField"
 import type { CreateUserDTO } from "@/shared/types/user.type"
 import { Box, Flex, SimpleGrid, Text, VStack } from "@chakra-ui/react"
 import { useForm } from "react-hook-form"
+import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
 import { useI18n } from "@/shared/i18n/useI18n"
@@ -28,7 +29,8 @@ const CreateUserPage = ({
     } = useForm<CreateUserDTO>()
 
     const { t } = useI18n()
-    
+    const queryClient = useQueryClient()
+
     const navigate = useNavigate()
 
     const handleCancel = () => {
@@ -44,6 +46,10 @@ const CreateUserPage = ({
         const user = await userApi.create(data)
 
         if (!user) return
+
+        // Refresh user lists and the dashboard counts.
+        void queryClient.invalidateQueries({ queryKey: ["users"] })
+        void queryClient.invalidateQueries({ queryKey: ["dashboard"] })
 
         toaster.create({
             title: t("users.created"),

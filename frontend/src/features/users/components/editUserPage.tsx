@@ -66,9 +66,27 @@ const EditUserPage = () => {
         }
     })
 
-    const onSubmit = (data: UpdateUserDTO) => {
-        updateMutation.mutate(data)
+   const onSubmit = (data: UpdateUserDTO) => {
+    const payload: UpdateUserDTO = {}
+
+    if (data.name !== undefined) {
+        payload.name = data.name
     }
+
+    if (data.username !== undefined) {
+        payload.username = data.username
+    }
+
+    if (data.role !== undefined) {
+        payload.role = data.role
+    }
+
+    if (data.status !== undefined) {
+        payload.status = data.status
+    }
+
+    updateMutation.mutate(payload)
+} 
 
     // ── Loading ──
     if (isLoading) return (
