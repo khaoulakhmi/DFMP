@@ -132,21 +132,42 @@ const DesignationList = () => {
     const designations = designationsQuery.data?.data ?? []
 
     const deleteMutation = useMutation({
-        mutationFn: (rows: Designation[]) =>
-            Promise.all(rows.map(designation => designationApi.delete(String(designation.id)))),
-        onSuccess: (_, rows) => {
-            queryClient.invalidateQueries({ queryKey: ["designations"] })
+        mutationFn: async (rows: Designation[]) => {
+            const results = await Promise.allSettled(
+                rows.map(designation =>
+                    designationApi.delete(String(designation.id))
+                )
+            )
+
+            return {
+                succeeded: results.filter(result => result.status === "fulfilled").length,
+                failed: results.filter(result => result.status === "rejected").length,
+            }
+        },
+
+        onSuccess: ({ succeeded, failed }) => {
             toaster.create({
-                title: `${rows.length} designation${rows.length > 1 ? "s" : ""} deleted`,
-                type: "success",
+                title: failed === 0
+                    ? "Designations deleted"
+                    : "Some designations could not be deleted",
+                description: `${succeeded} deleted, ${failed} failed.`,
+                type: failed === 0 ? "success" : "warning",
             })
         },
+
         onError: () => {
             toaster.create({
-                title: "Error",
-                description: "Failed to delete designations.",
+                title: "Deletion failed",
+                description: "An unexpected error occurred. Please try again.",
                 type: "error",
             })
+        },
+
+        onSettled: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["designations"] }),
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+            ])
         },
     })
 
