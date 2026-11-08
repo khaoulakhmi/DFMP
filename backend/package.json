@@ -8,7 +8,8 @@
     "start": "node dist/src/server.js",
     "type-check": "prisma generate && tsc --noEmit",
     "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:pagination": "tsx --test tests/pagination.test.ts"
   },
   "keywords": [],
   "author": "",
