@@ -1,13 +1,6 @@
-
-
-import { lotApi } from "@/api/lot.api"
-import { productApi } from "@/api/product.api"
-import { providerApi } from "@/api/provider.api"
+import { dashboardApi } from "@/api/dashboard.api"
 import { userApi } from "@/api/user.api"
-import type { Lot } from "@/shared/types/lot.types"
-import type { Product } from "@/shared/types/product.types"
-import type { Provider } from "@/shared/types/provider.types"
-import type { User } from "@/shared/types/user.type"
+import Button from "@/shared/components/atoms/button"
 import { useI18n } from "@/shared/i18n/useI18n"
 import { Box, Flex, Grid, HStack, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
@@ -15,20 +8,34 @@ import { FiBox, FiBriefcase, FiChevronRight, FiPackage, FiUsers } from "react-ic
 import { Link as RouterLink } from "react-router-dom"
 import DashboardStatCard from "./DashboardStatCard"
 
+const RECENT_USERS_LIMIT = 4
+
 const AdminDashboard = () => {
     const { language, t } = useI18n()
-    const usersQuery = useQuery<User[]>({ queryKey: ["users"], queryFn: userApi.getAll })
-    const providersQuery = useQuery<Provider[]>({ queryKey: ["providers"], queryFn: providerApi.getAll })
-    const lotsQuery = useQuery<Lot[]>({ queryKey: ["lots"], queryFn: lotApi.getAll })
-    const productsQuery = useQuery<Product[]>({ queryKey: ["products"], queryFn: productApi.getAll })
 
-    const users = usersQuery.data ?? []
-    const lots = lotsQuery.data ?? []
-    const recentUsers = [...users]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 4)
-    const activeLots = lots.filter(lot => lot.specificationsId).length
-    const isLoading = [usersQuery, providersQuery, lotsQuery, productsQuery].some(query => query.isLoading)
+    // Every count is computed by the backend, so totals stay right at any size.
+    const summaryQuery = useQuery({
+        queryKey: ["dashboard", "summary"],
+        queryFn: () => dashboardApi.getSummary(),
+    })
+
+    // Newest users first, limited on the server.
+    const recentUsersQuery = useQuery({
+        queryKey: ["users", "list", { page: 1, pageSize: RECENT_USERS_LIMIT, sortBy: "createdAt", sortOrder: "desc" }],
+        queryFn: () => userApi.list({
+            page: 1,
+            pageSize: RECENT_USERS_LIMIT,
+            sortBy: "createdAt",
+            sortOrder: "desc",
+        }),
+    })
+
+    const summary = summaryQuery.data
+    const recentUsers = recentUsersQuery.data?.data ?? []
+
+    // "—" while loading, "!" when the request failed, otherwise the number.
+    const statValue = (value: number | undefined) =>
+        summaryQuery.isError ? "!" : value ?? "—"
 
     return (
         <VStack align="stretch" gap={7}>
@@ -40,11 +47,23 @@ const AdminDashboard = () => {
                 <Text px={3} py={1.5} bg="primary.50" borderRadius="full" color="primary.700" fontSize="sm" fontWeight="medium">{t("dashboard.administrator")}</Text>
             </Flex>
 
+            {summaryQuery.isError && (
+                <Flex
+                    p={4} gap={3} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl"
+                    align={{ base: "stretch", sm: "center" }} justify="space-between" direction={{ base: "column", sm: "row" }}
+                >
+                    <Text color="error.600" fontSize="sm" fontWeight="medium">{t("dashboard.summaryError")}</Text>
+                    <Box w={{ base: "full", sm: "32" }}>
+                        <Button variant="secondary" size="sm" onClick={() => void summaryQuery.refetch()}>{t("common.retry")}</Button>
+                    </Box>
+                </Flex>
+            )}
+
             <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
-                <DashboardStatCard label={t("users")} value={usersQuery.data?.length ?? "—"} icon={<FiUsers />} accent="primary" />
-                <DashboardStatCard label={t("providers")} value={providersQuery.data?.length ?? "—"} icon={<FiBriefcase />} accent="secondary" />
-                <DashboardStatCard label={t("lots")} value={lotsQuery.data?.length ?? "—"} icon={<FiBox />} accent="accent" />
-                <DashboardStatCard label={t("products")} value={productsQuery.data?.length ?? "—"} icon={<FiPackage />} accent="success" />
+                <DashboardStatCard label={t("users")} value={statValue(summary?.users.total)} icon={<FiUsers />} accent="primary" />
+                <DashboardStatCard label={t("providers")} value={statValue(summary?.providers.total)} icon={<FiBriefcase />} accent="secondary" />
+                <DashboardStatCard label={t("lots")} value={statValue(summary?.lots.total)} icon={<FiBox />} accent="accent" />
+                <DashboardStatCard label={t("products")} value={statValue(summary?.products.total)} icon={<FiPackage />} accent="success" />
             </SimpleGrid>
 
             <Grid templateColumns={{ base: "1fr", lg: "1.35fr 1fr" }} gap={5}>
@@ -59,8 +78,15 @@ const AdminDashboard = () => {
                         </Text>
                     </Flex>
 
-                    {isLoading ? (
+                    {recentUsersQuery.isLoading ? (
                         <Flex minH="140px" align="center" justify="center"><Spinner color="primary.500" /></Flex>
+                    ) : recentUsersQuery.isError ? (
+                        <Flex minH="140px" direction="column" align="center" justify="center" gap={3}>
+                            <Text color="error.600" fontSize="sm">{t("dashboard.recentUsersError")}</Text>
+                            <Box w="32">
+                                <Button variant="secondary" size="sm" onClick={() => void recentUsersQuery.refetch()}>{t("common.retry")}</Button>
+                            </Box>
+                        </Flex>
                     ) : recentUsers.length ? (
                         <VStack align="stretch" gap={0}>
                             {recentUsers.map(user => (
@@ -86,8 +112,8 @@ const AdminDashboard = () => {
                         <Text fontWeight="semibold" color="neutral.900">{t("dashboard.lotStatus")}</Text>
                         <Text mt={1} fontSize="sm" color="neutral.500">{t("dashboard.lotStatusDescription")}</Text>
                         <HStack mt={5} justify="space-between">
-                            <Box><Text fontSize="2xl" fontWeight="bold" color="success.600">{lotsQuery.data ? activeLots : "—"}</Text><Text fontSize="sm" color="neutral.500">{t("dashboard.activeLots")}</Text></Box>
-                            <Box textAlign="right"><Text fontSize="2xl" fontWeight="bold" color="neutral.800">{lotsQuery.data ? lots.length - activeLots : "—"}</Text><Text fontSize="sm" color="neutral.500">{t("dashboard.lotsWithoutSpecification")}</Text></Box>
+                            <Box><Text fontSize="2xl" fontWeight="bold" color="success.600">{statValue(summary?.lots.withSpecification)}</Text><Text fontSize="sm" color="neutral.500">{t("dashboard.activeLots")}</Text></Box>
+                            <Box textAlign="right"><Text fontSize="2xl" fontWeight="bold" color="neutral.800">{statValue(summary?.lots.withoutSpecification)}</Text><Text fontSize="sm" color="neutral.500">{t("dashboard.lotsWithoutSpecification")}</Text></Box>
                         </HStack>
                     </Box>
                     <Box bg="primary.700" color="white" borderRadius="xl" p={5}>
@@ -106,6 +132,5 @@ const AdminDashboard = () => {
         </VStack>
     )
 }
-
 
 export default AdminDashboard
