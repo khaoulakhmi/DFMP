@@ -20,7 +20,7 @@ export type Product = {
     quantityMin: number
     quantityMax: number
     designationId: number
-    lotId: number
+    lotId: number | null
     createdAt: string
     updatedAt: string
     designation?: Designation
@@ -37,7 +37,8 @@ export type CreateProductDTO = {
     quantityMin: number
     quantityMax: number
     designationId: number
-    lotId?: number
+    // null removes the product from its lot.
+    lotId?: number | null
 }
 
 export type UpdateProductDTO = Partial<CreateProductDTO>
