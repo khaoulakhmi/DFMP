@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { intIdParams, intIdParamsSchema } from "../../utils/id";
+import { paginationQueryShape, sortOrderSchema } from "../../utils/pagination";
 
 const designationBodySchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
@@ -20,6 +21,15 @@ export const updateDesignationSchema = z.object({
 
 export const designationIdSchema = intIdParamsSchema;
 
+export const designationListQuerySchema = z.object({
+    ...paginationQueryShape,
+    sortBy: z.enum(["id", "name"]).default("name"),
+    sortOrder: sortOrderSchema.default("asc"),
+}).strict();
+
 export const getDesignationsSchema = z.object({
-    query: z.object({}).strict(),
+    query: designationListQuerySchema,
 });
+
+export type DesignationListQuery =
+    z.infer<typeof designationListQuerySchema>;

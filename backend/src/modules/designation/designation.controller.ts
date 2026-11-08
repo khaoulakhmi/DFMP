@@ -3,6 +3,7 @@ import { DesignationService } from "./designation.service";
 import { notFoundError } from "../../utils/AppError";
 import { parseIntIdParam } from "../../utils/id";
 import { createPrismaErrorMapper } from "../../utils/prismaError";
+import type { DesignationListQuery } from "./designation.validation";
 
 const mapPrismaError = createPrismaErrorMapper("Designation");
 
@@ -16,15 +17,21 @@ export const DesignationController = {
         }
     },
 
-    getAllDesignations: async (req: Request, res: Response, next: NextFunction) => {
+    getAllDesignations: async (
+        req: Request,
+        res: Response<unknown, { validatedQuery: DesignationListQuery }>,
+        next: NextFunction,
+    ) => {
         try {
-            const designations = await DesignationService.getAllDesignations();
-            res.status(200).json(designations);
-        } catch (error) {
+            const result = await DesignationService.getAllDesignations(
+                res.locals.validatedQuery,
+            );
+
+            res.status(200).json(result);
+        } catch (error: unknown) {
             next(error);
         }
     },
-
     getDesignationById: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const id = parseIntIdParam(req.params.id);
