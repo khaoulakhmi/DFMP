@@ -11,6 +11,7 @@ import designationRouter from "./modules/designation/designation.routes";
 import { ProductRouter } from "./modules/product/product.routes";
 import LotRouter from "./modules/lot/lot.routes";
 import SpecificationRouter from "./modules/specification/specification.routes";
+import dashboardRouter from "./modules/dashboard/dashboard.routes";
 import { requestLogging } from './middlewares/requestLogging.middleware'
 import { errorHandler } from './middlewares/error.middleware'
 import { AppError } from './utils/AppError'
@@ -45,6 +46,7 @@ app.use("/api/designations", designationRouter);
 app.use("/api/products", ProductRouter);
 app.use("/api/lots", LotRouter);
 app.use("/api/specifications", SpecificationRouter);
+app.use("/api/dashboard", dashboardRouter);
 app.get("/", (req: Request, res: Response) => {
   res.send("hello khaoula, API is running...");
 });
