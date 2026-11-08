@@ -2,6 +2,12 @@ import { z } from "zod";
 import { TVA } from "../../generated/prisma/enums";
 import { intIdParams, intIdParamsSchema, intIdSchema, MAX_DB_INT } from "../../utils/id";
 import { amountSchema } from "../../utils/amount";
+import {
+    paginationQueryShape,
+    positiveIntegerQuery,
+    sortOrderSchema,
+} from "../../utils/pagination";
+
 
 const quantitySchema = z.number()
     .int("Quantity must be a whole number")
@@ -72,6 +78,27 @@ export const updateProductSchema = z.object({
 
 export const productIdSchema = intIdParamsSchema;
 
+export const productListQuerySchema = z.object({
+    ...paginationQueryShape,
+
+    designationId: positiveIntegerQuery.optional(),
+    lotId: positiveIntegerQuery.optional(),
+    // Products that are not in this lot (unassigned or in another lot).
+    notInLotId: positiveIntegerQuery.optional(),
+    tva: z.enum(TVA).optional(),
+
+    sortBy: z
+        .enum(["name", "unit", "unitPrice", "createdAt"])
+        .default("createdAt"),
+    sortOrder: sortOrderSchema.default("desc"),
+}).strict().refine(
+    query => query.lotId === undefined || query.notInLotId === undefined,
+    { message: "Use either lotId or notInLotId", path: ["notInLotId"] },
+);
+
 export const getProductsSchema = z.object({
-    query: z.object({}).strict(),
+    query: productListQuerySchema,
 });
+
+export type ProductListQuery =
+    z.infer<typeof productListQuerySchema>;

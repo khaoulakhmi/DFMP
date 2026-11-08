@@ -1,5 +1,9 @@
 import prisma from "../../config/prisma";
 import { CreateProductDTO, UpdateProductDTO } from "./product.types";
+import type { Prisma } from "../../generated/prisma/client";
+import type { ProductListQuery } from "./product.validation";
+import { pageToSkip, paginate } from "../../utils/pagination";
+
 
 const ProductService = {
     createProduct: async (data: CreateProductDTO) => {
@@ -21,11 +25,73 @@ const ProductService = {
         return await prisma.product.delete({ where: { id } });
     },
 
-    listProducts: async () => {
-        return await prisma.product.findMany({
-            include: { designation: true, lot: true },
-            orderBy: { id: "desc" },
-        });
+    listProducts: async (query: ProductListQuery) => {
+        const {
+            page,
+            pageSize,
+            search,
+            designationId,
+            lotId,
+            notInLotId,
+            tva,
+            sortBy,
+            sortOrder,
+        } = query;
+
+        const conditions: Prisma.ProductWhereInput[] = [];
+
+        if (search) {
+            conditions.push({
+                OR: [
+                    { name: { contains: search, mode: "insensitive" } },
+                    { unit: { contains: search, mode: "insensitive" } },
+                ],
+            });
+        }
+
+        if (notInLotId !== undefined) {
+            conditions.push({
+                OR: [{ lotId: null }, { lotId: { not: notInLotId } }],
+            });
+        }
+
+        const where: Prisma.ProductWhereInput = conditions.length ? { AND: conditions } : {};
+
+        if (designationId !== undefined) {
+            where.designationId = designationId;
+        }
+
+        if (lotId !== undefined) {
+            where.lotId = lotId;
+        }
+
+        if (tva !== undefined) {
+            where.tva = tva;
+        }
+
+        const orderBy: Prisma.ProductOrderByWithRelationInput[] = [
+            { [sortBy]: sortOrder },
+            { id: "asc" },
+        ];
+
+        const [data, total] = await prisma.$transaction(
+            [
+                prisma.product.findMany({
+                    where,
+                    orderBy,
+                    skip: pageToSkip(page, pageSize),
+                    take: pageSize,
+                    include: {
+                        designation: true,
+                        lot: true,
+                    },
+                }),
+                prisma.product.count({ where }),
+            ],
+            { isolationLevel: "RepeatableRead" },
+        );
+
+        return paginate(data, total, page, pageSize);
     },
 };
 

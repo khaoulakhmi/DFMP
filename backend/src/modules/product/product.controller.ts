@@ -4,6 +4,8 @@ import { notFoundError } from "../../utils/AppError";
 import { parseIntIdParam } from "../../utils/id";
 import { createPrismaErrorMapper } from "../../utils/prismaError";
 import { CreateProductDTO, UpdateProductDTO } from "./product.types";
+import type { ProductListQuery } from "./product.validation";
+
 
 const mapPrismaError = createPrismaErrorMapper("Product");
 
@@ -52,11 +54,18 @@ export const ProductController = {
         }
     },
 
-    listProducts: async (req: Request, res: Response, next: NextFunction) => {
+    listProducts: async (
+        req: Request,
+        res: Response<unknown, { validatedQuery: ProductListQuery }>,
+        next: NextFunction,
+    ) => {
         try {
-            const products = await ProductService.listProducts();
-            res.json(products);
-        } catch (error) {
+            const result = await ProductService.listProducts(
+                res.locals.validatedQuery,
+            );
+
+            res.json(result);
+        } catch (error: unknown) {
             next(error);
         }
     },
