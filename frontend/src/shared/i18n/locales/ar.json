@@ -255,5 +255,16 @@
     "common.lastUpdated": "آخر تحديث: {{date}}",
     "users.notFound": "المستخدم غير موجود أو تعذر تحميله.",
     "users.editing": "تعديل {{name}}",
-    "users.confirmDeleteNamed": "حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء."
+    "users.confirmDeleteNamed": "حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "common.retry": "إعادة المحاولة",
+    "common.rowsPerPage": "عدد الصفوف في الصفحة",
+    "common.loadMore": "تحميل المزيد",
+    "common.all": "الكل",
+    "common.clearSelection": "إزالة",
+    "common.selectPlaceholder": "اختر...",
+    "common.refreshFailed": "تعذر تحديث البيانات. قد تكون النتائج المعروضة قديمة.",
+    "common.showingRange": "{{from}}–{{to}} من {{total}}",
+    "common.selectedCount": "{{count}} محدد",
+    "dashboard.summaryError": "تعذر تحميل الإحصائيات.",
+    "dashboard.recentUsersError": "تعذر تحميل المستخدمين الجدد."
 }
