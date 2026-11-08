@@ -1,7 +1,7 @@
 import {type ReactNode } from "react"
 import { ChakraProvider } from "@chakra-ui/react"
 import { system } from "../../shared/theme"
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nProvider } from "@/shared/i18n/I18nContext"
 
 
@@ -9,7 +9,13 @@ interface Props {
   children?: ReactNode
 }
 
-const queryClient = new QueryClient({
+const queryClient: QueryClient = new QueryClient({
+    // Any successful create/update/delete can change the dashboard counts.
+    mutationCache: new MutationCache({
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+        },
+    }),
     defaultOptions: {
         queries: {
             retry: 1,
