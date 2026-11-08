@@ -1,33 +1,44 @@
-import type { CreateUserDTO, User } from '@/shared/types/user.type'
-import api from './axios'
+import type { CreateUserDTO, Role, UpdateUserDTO, User } from "@/shared/types/user.type"
+import type { ListParams, PaginatedResponse } from "@/shared/types/pagination.types"
+import api from "./axios"
+import { toQueryParams } from "./queryParams"
+
+export type UserSortField = "name" | "username" | "role" | "createdAt"
+
+export type UserListParams = ListParams<UserSortField> & {
+    role?: Role | undefined
+    status?: boolean | undefined
+}
 
 export const userApi = {
-    getAll: async () => {
-        const { data } = await api.get('/users')
+    list: async (params: UserListParams = {}): Promise<PaginatedResponse<User>> => {
+        const { data } = await api.get<PaginatedResponse<User>>("/users", {
+            params: toQueryParams(params),
+        })
         return data
     },
 
-    getById: async (id: string) => {
-        const { data } = await api.get(`/users/${id}`)
+    getById: async (id: string): Promise<User> => {
+        const { data } = await api.get<User>(`/users/${id}`)
         return data
     },
 
-    getByUsername: async (username: string) => {
-        const { data } = await api.get(`/users/username/${username}`)
+    getByUsername: async (username: string): Promise<User> => {
+        const { data } = await api.get<User>(`/users/username/${username}`)
         return data
     },
 
-    create: async (userData: CreateUserDTO) => {
-        const { data } = await api.post('/users', userData)
+    create: async (userData: CreateUserDTO): Promise<User> => {
+        const { data } = await api.post<User>("/users", userData)
         return data
     },
 
-    update: async (id: string, userData: Partial<User>) => {
-        const { data } = await api.put(`/users/${id}`, userData)
+    update: async (id: string, userData: Partial<UpdateUserDTO>): Promise<User> => {
+        const { data } = await api.put<User>(`/users/${id}`, userData)
         return data
     },
 
-    delete: async (id: string) => {
+    delete: async (id: string): Promise<void> => {
         await api.delete(`/users/${id}`)
-    }
+    },
 }
