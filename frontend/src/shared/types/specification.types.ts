@@ -43,6 +43,8 @@ export type Specification = {
     designation?: Designation
     lots?: Lot[]
     tendering?: Tendering | null
+    // Present on list responses, which omit the full lot list.
+    _count?: { lots: number }
 }
 
 export type TenderingPayload = {
