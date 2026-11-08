@@ -255,5 +255,16 @@
     "common.lastUpdated": "Dernière mise à jour : {{date}}",
     "users.notFound": "Utilisateur introuvable ou échec du chargement.",
     "users.editing": "Modification de {{name}}",
-    "users.confirmDeleteNamed": "Supprimer {{name}} ? Cette action est irréversible."
+    "users.confirmDeleteNamed": "Supprimer {{name}} ? Cette action est irréversible.",
+    "common.retry": "Réessayer",
+    "common.rowsPerPage": "Lignes par page",
+    "common.loadMore": "Charger plus",
+    "common.all": "Tous",
+    "common.clearSelection": "Retirer",
+    "common.selectPlaceholder": "Sélectionner...",
+    "common.refreshFailed": "Impossible d'actualiser les données. Les résultats affichés peuvent être obsolètes.",
+    "common.showingRange": "{{from}}–{{to}} sur {{total}}",
+    "common.selectedCount": "{{count}} sélectionné(s)",
+    "dashboard.summaryError": "Impossible de charger les statistiques.",
+    "dashboard.recentUsersError": "Impossible de charger les utilisateurs récents."
 }
