@@ -1,6 +1,7 @@
 import { Prisma } from "../../generated/prisma/browser";
 
-export const userSelect: Prisma.UserSelect = {
+// `satisfies` keeps the exact shape, so query results are typed without the password.
+export const userSelect = {
   id: true,
   name: true,
   username: true,
@@ -8,6 +9,6 @@ export const userSelect: Prisma.UserSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
-}
+} satisfies Prisma.UserSelect
 
 export default userSelect

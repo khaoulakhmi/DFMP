@@ -1,6 +1,7 @@
 import z from "zod";
 import { Role } from "../../generated/prisma/enums";
 import { cuidParams, cuidParamsSchema } from "../../utils/id";
+import { booleanQuery, paginationQueryShape, sortOrderSchema } from "../../utils/pagination";
 
 const roleEnum = z.enum([Role.ADMIN, Role.SALES, Role.FINANCE, Role.ACCOUNTANT])
 
@@ -33,3 +34,21 @@ export const updateUserSchema = z.object(
 )
 
 export const userIdSchema = cuidParamsSchema;
+
+export const userListQuerySchema = z.object({
+    ...paginationQueryShape,
+
+    role: roleEnum.optional(),
+    status: booleanQuery.optional(),
+
+    sortBy: z
+        .enum(["name", "username", "role", "createdAt"])
+        .default("createdAt"),
+    sortOrder: sortOrderSchema.default("desc"),
+}).strict();
+
+export const getUsersSchema = z.object({
+    query: userListQuerySchema,
+});
+
+export type UserListQuery = z.infer<typeof userListQuerySchema>;

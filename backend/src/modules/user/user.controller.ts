@@ -4,6 +4,7 @@ import { UpdateUserDTO } from "./user.types";
 import { AppError, notFoundError } from "../../utils/AppError";
 import { parseCuidParam } from "../../utils/id";
 import { createPrismaErrorMapper } from "../../utils/prismaError";
+import type { UserListQuery } from "./user.validation";
 
 // Username is the only unique field on User.
 const mapPrismaError = createPrismaErrorMapper("User", {
@@ -11,10 +12,14 @@ const mapPrismaError = createPrismaErrorMapper("User", {
 });
 
 export const UserController = {
-    async getAllUsers(req: Request, res: Response, next: NextFunction) {
+    async getAllUsers(
+        req: Request,
+        res: Response<unknown, { validatedQuery: UserListQuery }>,
+        next: NextFunction,
+    ) {
         try {
-            const users = await UserService.getAllUsers();
-            res.json(users);
+            const result = await UserService.getAllUsers(res.locals.validatedQuery);
+            res.json(result);
         } catch (error) {
             next(error);
         }

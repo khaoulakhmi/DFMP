@@ -4,12 +4,12 @@ import { authenticate } from "../../middlewares/auth.middleware";
 import { authorize, authorizeSelfOrAdmin } from "../../middlewares/role.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { Role } from "../../generated/prisma/enums";
-import { createUserSchema, updateUserSchema, userIdSchema } from "./user.validation";
+import { createUserSchema, getUsersSchema, updateUserSchema, userIdSchema } from "./user.validation";
 
 
 const userRouter = Router();
 
-userRouter.get("/", authenticate, authorize(Role.ADMIN), UserController.getAllUsers);
+userRouter.get("/", authenticate, authorize(Role.ADMIN), validate(getUsersSchema), UserController.getAllUsers);
 userRouter.get("/username/:username", authenticate, UserController.getUserByUsername);
 userRouter.get("/:id", authenticate, authorizeSelfOrAdmin, validate(userIdSchema), UserController.getUserById);
 
