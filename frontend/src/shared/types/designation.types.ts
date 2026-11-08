@@ -8,6 +8,8 @@ export type Designation = {
     products?: Product[]
     lots?: Lot[]
     specifications?: SpecificationSummary[]
+    // Present on list responses.
+    _count?: { lots: number; products: number; specifications: number }
 }
 
 export type SpecificationSummary = {
