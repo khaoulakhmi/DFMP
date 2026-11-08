@@ -1,4 +1,4 @@
-import { designationApi } from "@/api/designation.api"
+import { designationApi, type DesignationSortField } from "@/api/designation.api"
 import Button from "@/shared/components/atoms/button"
 import Badge from "@/shared/components/atoms/badge"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
@@ -6,7 +6,8 @@ import Table from "@/shared/components/organisms/Table"
 import type { Designation } from "@/shared/types/designation.types"
 import type { Column } from "@/shared/types/table.types"
 import { Box, Flex, HStack, Text, VStack } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useServerTable } from "@/shared/hooks/useServerTable"
 import { FiPlus } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
@@ -28,7 +29,11 @@ const getInitials = (name: unknown) => {
     return `${words[0]?.charAt(0) ?? ""}${words[1]?.charAt(0) ?? ""}`.toUpperCase()
 }
 
-const countItems = (items: unknown) => Array.isArray(items) ? items.length : 0
+type RelationCount = "lots" | "products" | "specifications"
+
+// List rows carry `_count`; fall back to loaded arrays when present.
+const countItems = (row: Designation, relation: RelationCount) =>
+    row._count?.[relation] ?? row[relation]?.length ?? 0
 
 const columns: Column<Designation>[] = [
     {
@@ -76,10 +81,10 @@ const columns: Column<Designation>[] = [
     {
         key: "lots",
         label: "Lots",
-        render: (value) => (
+        render: (_, row) => (
             <Badge
-                label={`${countItems(value)} lot${countItems(value) === 1 ? "" : "s"}`}
-                variant={countItems(value) > 0 ? "primary" : "neutral"}
+                label={`${countItems(row, "lots")} lot${countItems(row, "lots") === 1 ? "" : "s"}`}
+                variant={countItems(row, "lots") > 0 ? "primary" : "neutral"}
                 tone="subtle"
                 size="sm"
             />
@@ -88,10 +93,10 @@ const columns: Column<Designation>[] = [
     {
         key: "products",
         label: "Products",
-        render: (value) => (
+        render: (_, row) => (
             <Badge
-                label={`${countItems(value)} product${countItems(value) === 1 ? "" : "s"}`}
-                variant={countItems(value) > 0 ? "accent" : "neutral"}
+                label={`${countItems(row, "products")} product${countItems(row, "products") === 1 ? "" : "s"}`}
+                variant={countItems(row, "products") > 0 ? "accent" : "neutral"}
                 tone="subtle"
                 size="sm"
             />
@@ -100,10 +105,10 @@ const columns: Column<Designation>[] = [
     {
         key: "specifications",
         label: "Specifications",
-        render: (value) => (
+        render: (_, row) => (
             <Badge
-                label={`${countItems(value)} spec${countItems(value) === 1 ? "" : "s"}`}
-                variant={countItems(value) > 0 ? "secondary" : "neutral"}
+                label={`${countItems(row, "specifications")} spec${countItems(row, "specifications") === 1 ? "" : "s"}`}
+                variant={countItems(row, "specifications") > 0 ? "secondary" : "neutral"}
                 tone="outline"
                 size="sm"
             />
@@ -116,10 +121,15 @@ const DesignationList = () => {
     const queryClient = useQueryClient()
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-    const { data: designations = [] as Designation[], isLoading, isError } = useQuery({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
+    const table = useServerTable<DesignationSortField>({ pageSize: 10 })
+
+    const designationsQuery = useQuery({
+        queryKey: ["designations", "list", table.params],
+        queryFn: () => designationApi.list(table.params),
+        placeholderData: keepPreviousData,
     })
+
+    const designations = designationsQuery.data?.data ?? []
 
     const deleteMutation = useMutation({
         mutationFn: (rows: Designation[]) =>
@@ -197,9 +207,10 @@ const DesignationList = () => {
                 data={designations}
                 columns={columns}
                 searchable
-                searchKeys={["name", "description"]}
-                isError={isError}
-                isLoading={isLoading}
+                server={table.tableState(designationsQuery.data?.pagination, designationsQuery.isFetching)}
+                isError={designationsQuery.isError}
+                isLoading={designationsQuery.isLoading}
+                onRetry={() => void designationsQuery.refetch()}
                 keyExtractor={(designation) => String(designation.id)}
                 onEdit={handleEdit}
                 actions={actions}

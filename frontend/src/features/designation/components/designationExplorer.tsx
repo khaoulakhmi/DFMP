@@ -5,18 +5,23 @@ import Button from "@/shared/components/atoms/button"
 import Badge from "@/shared/components/atoms/badge"
 import Modal from "@/shared/components/molecules/modal"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue"
+import { useI18n } from "@/shared/i18n/useI18n"
 import type { Designation } from "@/shared/types/designation.types"
 import type { Lot } from "@/shared/types/lot.types"
-import type { Product, TVA } from "@/shared/types/product.types"
-import { Box, Flex, HStack, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useMemo, useState } from "react"
-import { FiBox, FiChevronRight, FiEdit2, FiGrid, FiPlus, FiShoppingCart, FiTrash2 } from "react-icons/fi"
+import type { PaginatedResponse } from "@/shared/types/pagination.types"
+import type { TVA } from "@/shared/types/product.types"
+import { Box, chakra, Flex, HStack, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react"
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query"
+import { useState } from "react"
+import { FiBox, FiChevronRight, FiEdit2, FiGrid, FiPlus, FiSearch, FiShoppingCart, FiTrash2 } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import CreateDesignationModal from "./createDesignationModal"
 import EditDesignationModal from "./editDesignationModal"
 import CreateLotModal from "@/features/lot/components/createLotModal"
 import CreateProductModal from "@/features/product/components/createProductModal"
+
+const PAGE_SIZE = 20
 
 const tvaLabels: Record<TVA, string> = {
     ZERO: "TVA 0%",
@@ -29,8 +34,13 @@ const truncate = (value: string, max = 18) => {
     return `${value.slice(0, max - 1)}...`
 }
 
-const countByDesignation = <T extends { designationId: number }>(items: T[], designationId: number) =>
-    items.filter(item => item.designationId === designationId).length
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`
+
+const nextPage = <T,>(last: PaginatedResponse<T>) =>
+    last.pagination.page < last.pagination.totalPages ? last.pagination.page + 1 : undefined
+
+const flatten = <T,>(data: InfiniteData<PaginatedResponse<T>> | undefined) =>
+    data?.pages.flatMap(page => page.data) ?? []
 
 const ExplorerCard = ({ children }: { children: React.ReactNode }) => (
     <Box
@@ -103,75 +113,138 @@ const EmptyState = ({ label }: { label: string }) => (
     </Flex>
 )
 
+// Loading / error / "load more" states shared by the three columns.
+const ColumnStatus = ({
+    isLoading,
+    isError,
+    onRetry,
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore,
+}: {
+    isLoading: boolean
+    isError: boolean
+    onRetry: () => void
+    hasNextPage: boolean
+    isFetchingNextPage: boolean
+    onLoadMore: () => void
+}) => {
+    const { t } = useI18n()
+
+    if (isLoading) {
+        return <Flex h="40" align="center" justify="center"><Spinner color="primary.500" size="sm" /></Flex>
+    }
+
+    if (isError) {
+        return (
+            <Flex py={6} direction="column" align="center" gap={2}>
+                <Text fontSize="sm" color="error.600">{t("common.failedToLoad")}</Text>
+                <chakra.button type="button" fontSize="sm" color="primary.700" fontWeight="medium" onClick={onRetry}>
+                    {t("common.retry")}
+                </chakra.button>
+            </Flex>
+        )
+    }
+
+    if (!hasNextPage) return null
+
+    return (
+        <chakra.button
+            type="button"
+            w="full"
+            py={3}
+            fontSize="sm"
+            color="primary.700"
+            fontWeight="medium"
+            disabled={isFetchingNextPage}
+            onClick={onLoadMore}
+        >
+            {isFetchingNextPage ? <Spinner size="xs" /> : t("common.loadMore")}
+        </chakra.button>
+    )
+}
+
 const DesignationExplorer = () => {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
+    const { t } = useI18n()
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [isCreateLotOpen, setIsCreateLotOpen] = useState(false)
     const [isCreateProductOpen, setIsCreateProductOpen] = useState(false)
     const [editingDesignation, setEditingDesignation] = useState<Designation | null>(null)
     const [deletingDesignation, setDeletingDesignation] = useState<Designation | null>(null)
-    const [selectedDesignationId, setSelectedDesignationId] = useState<number | null>(null)
-    const [selectedLotId, setSelectedLotId] = useState<number | null>(null)
+    const [pickedDesignation, setPickedDesignation] = useState<Designation | null>(null)
+    const [pickedLot, setPickedLot] = useState<Lot | null>(null)
+    const [designationSearch, setDesignationSearch] = useState("")
+    const search = useDebouncedValue(designationSearch.trim(), 300)
 
-    const {
-        data: designations = [] as Designation[],
-        isLoading: isLoadingDesignations,
-        isError: isDesignationError,
-    } = useQuery<Designation[]>({
-        queryKey: ["designations"],
-        queryFn: designationApi.getAll,
+    const designationsQuery = useInfiniteQuery({
+        queryKey: ["designations", "explorer", { search }],
+        queryFn: ({ pageParam }) => designationApi.list({
+            page: pageParam,
+            pageSize: PAGE_SIZE,
+            search: search || undefined,
+            sortBy: "name",
+            sortOrder: "asc",
+        }),
+        initialPageParam: 1,
+        getNextPageParam: nextPage,
     })
+    const designations = flatten(designationsQuery.data)
 
-    const {
-        data: lots = [] as Lot[],
-        isLoading: isLoadingLots,
-        isError: isLotError,
-    } = useQuery<Lot[]>({
-        queryKey: ["lots"],
-        queryFn: lotApi.getAll,
+    // Use the fresh copy when loaded (e.g. after a rename); default to the first one.
+    const selectedDesignation =
+        (pickedDesignation && (designations.find(item => item.id === pickedDesignation.id) ?? pickedDesignation)) ??
+        designations[0] ??
+        null
+    const selectedDesignationId = selectedDesignation?.id ?? null
+
+    const lotsQuery = useInfiniteQuery({
+        queryKey: ["lots", "by-designation", selectedDesignationId, "explorer"],
+        queryFn: ({ pageParam }) => lotApi.list({
+            page: pageParam,
+            pageSize: PAGE_SIZE,
+            designationId: selectedDesignationId ?? undefined,
+            sortBy: "name",
+            sortOrder: "asc",
+        }),
+        initialPageParam: 1,
+        getNextPageParam: nextPage,
+        enabled: selectedDesignationId !== null,
     })
+    const designationLots = flatten(lotsQuery.data)
 
-    const {
-        data: products = [] as Product[],
-        isLoading: isLoadingProducts,
-        isError: isProductError,
-    } = useQuery<Product[]>({
-        queryKey: ["products"],
-        queryFn: productApi.getAll,
+    const selectedLot =
+        (pickedLot && pickedLot.designationId === selectedDesignationId
+            ? designationLots.find(item => item.id === pickedLot.id) ?? pickedLot
+            : null) ??
+        designationLots[0] ??
+        null
+    const selectedLotId = selectedLot?.id ?? null
+
+    const productsQuery = useInfiniteQuery({
+        queryKey: ["products", "by-lot", selectedLotId],
+        queryFn: ({ pageParam }) => productApi.list({
+            page: pageParam,
+            pageSize: PAGE_SIZE,
+            lotId: selectedLotId ?? undefined,
+            sortBy: "name",
+            sortOrder: "asc",
+        }),
+        initialPageParam: 1,
+        getNextPageParam: nextPage,
+        enabled: selectedLotId !== null,
     })
+    const lotProducts = flatten(productsQuery.data)
 
-    const selectedDesignation = designations.find(designation => designation.id === selectedDesignationId) ?? null
-
-    const designationLots = useMemo(
-        () => lots.filter(lot => lot.designationId === selectedDesignationId),
-        [lots, selectedDesignationId],
-    )
-
-    const selectedLot = designationLots.find(lot => lot.id === selectedLotId) ?? null
-
-    const lotProducts = useMemo(
-        () => products.filter(product => product.lotId === selectedLotId),
-        [products, selectedLotId],
-    )
-
-    useEffect(() => {
-        if (selectedDesignationId !== null || designations.length === 0) return
-        setSelectedDesignationId(designations[0]?.id ?? null)
-    }, [designations, selectedDesignationId])
-
-    useEffect(() => {
-        if (designationLots.some(lot => lot.id === selectedLotId)) return
-        setSelectedLotId(designationLots[0]?.id ?? null)
-    }, [designationLots, selectedLotId])
-
-    const isLoading = isLoadingDesignations || isLoadingLots || isLoadingProducts
-    const isError = isDesignationError || isLotError || isProductError
+    const designationTotal = designationsQuery.data?.pages[0]?.pagination.total
+    const lotTotal = lotsQuery.data?.pages[0]?.pagination.total
+    const productTotal = productsQuery.data?.pages[0]?.pagination.total
 
     const deleteMutation = useMutation({
-        mutationFn: (designation: Designation) => designationApi.delete(String(designation.id)),
+        mutationFn: (designation: Designation) => designationApi.delete(designation.id),
         onSuccess: (_, designation) => {
-            queryClient.invalidateQueries({ queryKey: ["designations"] })
+            void queryClient.invalidateQueries({ queryKey: ["designations"] })
             toaster.create({
                 title: "Designation deleted",
                 description: `${designation.name} has been deleted.`,
@@ -179,9 +252,8 @@ const DesignationExplorer = () => {
             })
 
             if (selectedDesignationId === designation.id) {
-                const nextDesignation = designations.find(item => item.id !== designation.id)
-                setSelectedDesignationId(nextDesignation?.id ?? null)
-                setSelectedLotId(null)
+                setPickedDesignation(null)
+                setPickedLot(null)
             }
 
             setDeletingDesignation(null)
@@ -195,27 +267,6 @@ const DesignationExplorer = () => {
         },
     })
 
-    if (isLoading) {
-        return (
-            <Flex justify="center" align="center" h="64" bg="white" borderRadius="xl" border="1px solid" borderColor="neutral.200">
-                <VStack gap={3}>
-                    <Spinner color="primary.500" />
-                    <Text fontSize="sm" color="neutral.500">Loading designation explorer...</Text>
-                </VStack>
-            </Flex>
-        )
-    }
-
-    if (isError) {
-        return (
-            <Box p={6} bg="error.50" border="1px solid" borderColor="error.200" borderRadius="xl">
-                <Text color="error.600" fontSize="sm" fontWeight="medium">
-                    Failed to load designations, lots, or products.
-                </Text>
-            </Box>
-        )
-    }
-
     return (
         <Box>
             <CreateDesignationModal
@@ -225,14 +276,11 @@ const DesignationExplorer = () => {
             <CreateLotModal
                 open={isCreateLotOpen}
                 onClose={() => setIsCreateLotOpen(false)}
-                designations={designations}
                 defaultDesignationId={selectedDesignationId}
             />
             <CreateProductModal
                 open={isCreateProductOpen}
                 onClose={() => setIsCreateProductOpen(false)}
-                designations={designations}
-                lots={lots}
                 defaultDesignationId={selectedDesignationId}
                 defaultLotId={selectedLotId}
             />
@@ -273,19 +321,30 @@ const DesignationExplorer = () => {
                 <ExplorerCard>
                     <ColumnHeader
                         icon={<FiGrid />}
-                        title="Designations"
+                        title={designationTotal !== undefined ? `Designations (${designationTotal})` : "Designations"}
                         actionLabel="Add designation"
                         onAdd={() => setIsCreateModalOpen(true)}
                     />
 
-                    {designations.length === 0 ? (
-                        <EmptyState label="No designations available." />
+                    <Flex align="center" gap={2} px={4} py={2} borderBottom="1px solid" borderColor="neutral.100">
+                        <Box color="neutral.400"><FiSearch /></Box>
+                        <input
+                            value={designationSearch}
+                            placeholder={t("common.searchPlaceholder")}
+                            aria-label={t("common.searchPlaceholder")}
+                            onChange={event => setDesignationSearch(event.target.value)}
+                            style={{ flex: 1, border: "none", outline: "none", fontSize: "14px", background: "transparent" }}
+                        />
+                    </Flex>
+
+                    {designations.length === 0 && !designationsQuery.isLoading && !designationsQuery.isError ? (
+                        <EmptyState label={search ? t("common.noResults") : "No designations available."} />
                     ) : (
                         <VStack align="stretch" gap={0}>
                             {designations.map(designation => {
                                 const isSelected = designation.id === selectedDesignationId
-                                const lotsCount = countByDesignation(lots, designation.id)
-                                const productsCount = countByDesignation(products, designation.id)
+                                const lotsCount = designation._count?.lots ?? 0
+                                const productsCount = designation._count?.products ?? 0
 
                                 return (
                                     <Flex
@@ -301,7 +360,8 @@ const DesignationExplorer = () => {
                                         borderColor="neutral.200"
                                         _hover={{ bg: isSelected ? "primary.100" : "neutral.50" }}
                                         onClick={() => {
-                                            setSelectedDesignationId(designation.id)
+                                            setPickedDesignation(designation)
+                                            setPickedLot(null)
                                         }}
                                     >
                                         <Flex
@@ -322,7 +382,7 @@ const DesignationExplorer = () => {
                                                 {designation.name}
                                             </Text>
                                             <Text fontSize="xs" color="neutral.600">
-                                                {lotsCount} lot{lotsCount === 1 ? "" : "s"} - {productsCount} product{productsCount === 1 ? "" : "s"}
+                                                {plural(lotsCount, "lot")} - {plural(productsCount, "product")}
                                             </Text>
                                         </Box>
 
@@ -368,25 +428,35 @@ const DesignationExplorer = () => {
                             })}
                         </VStack>
                     )}
+                    <ColumnStatus
+                        isLoading={designationsQuery.isLoading}
+                        isError={designationsQuery.isError}
+                        onRetry={() => void designationsQuery.refetch()}
+                        hasNextPage={designationsQuery.hasNextPage}
+                        isFetchingNextPage={designationsQuery.isFetchingNextPage}
+                        onLoadMore={() => void designationsQuery.fetchNextPage()}
+                    />
                 </ExplorerCard>
 
                 <ExplorerCard>
                     <ColumnHeader
                         icon={<FiBox />}
-                        title={selectedDesignation ? `Lots - ${selectedDesignation.name}` : "Lots"}
+                        title={selectedDesignation
+                            ? `Lots - ${selectedDesignation.name}${lotTotal !== undefined ? ` (${lotTotal})` : ""}`
+                            : "Lots"}
                         actionLabel="Add lot"
                         onAdd={() => setIsCreateLotOpen(true)}
                     />
 
                     {!selectedDesignation ? (
                         <EmptyState label="Select a designation to see lots." />
-                    ) : designationLots.length === 0 ? (
+                    ) : designationLots.length === 0 && !lotsQuery.isLoading && !lotsQuery.isError ? (
                         <EmptyState label="No lots for this designation." />
                     ) : (
                         <VStack align="stretch" gap={0}>
                             {designationLots.map(lot => {
                                 const isSelected = lot.id === selectedLotId
-                                const productsCount = products.filter(product => product.lotId === lot.id).length
+                                const productsCount = lot._count?.products ?? 0
                                 const status = lot.specificationsId ? "Active" : "No spec"
 
                                 return (
@@ -402,7 +472,7 @@ const DesignationExplorer = () => {
                                         borderBottom="1px solid"
                                         borderColor="neutral.200"
                                         _hover={{ bg: isSelected ? "primary.100" : "neutral.50" }}
-                                        onClick={() => setSelectedLotId(lot.id)}
+                                        onClick={() => setPickedLot(lot)}
                                     >
                                         <Flex
                                             w="8"
@@ -422,7 +492,7 @@ const DesignationExplorer = () => {
                                                 {truncate(lot.name, 22)}
                                             </Text>
                                             <Text fontSize="xs" color="neutral.600">
-                                                {productsCount} product{productsCount === 1 ? "" : "s"}
+                                                {plural(productsCount, "product")}
                                             </Text>
                                         </Box>
 
@@ -437,19 +507,31 @@ const DesignationExplorer = () => {
                             })}
                         </VStack>
                     )}
+                    {selectedDesignation && (
+                        <ColumnStatus
+                            isLoading={lotsQuery.isLoading}
+                            isError={lotsQuery.isError}
+                            onRetry={() => void lotsQuery.refetch()}
+                            hasNextPage={lotsQuery.hasNextPage}
+                            isFetchingNextPage={lotsQuery.isFetchingNextPage}
+                            onLoadMore={() => void lotsQuery.fetchNextPage()}
+                        />
+                    )}
                 </ExplorerCard>
 
                 <ExplorerCard>
                     <ColumnHeader
                         icon={<FiShoppingCart />}
-                        title={selectedLot ? `Products - ${selectedLot.name}` : "Products"}
+                        title={selectedLot
+                            ? `Products - ${selectedLot.name}${productTotal !== undefined ? ` (${productTotal})` : ""}`
+                            : "Products"}
                         actionLabel="Add product"
                         onAdd={() => setIsCreateProductOpen(true)}
                     />
 
                     {!selectedLot ? (
                         <EmptyState label="Select a lot to see products." />
-                    ) : lotProducts.length === 0 ? (
+                    ) : lotProducts.length === 0 && !productsQuery.isLoading && !productsQuery.isError ? (
                         <EmptyState label="No products for this lot." />
                     ) : (
                         <VStack align="stretch" gap={0}>
@@ -507,6 +589,16 @@ const DesignationExplorer = () => {
                                 </Flex>
                             ))}
                         </VStack>
+                    )}
+                    {selectedLot && (
+                        <ColumnStatus
+                            isLoading={productsQuery.isLoading}
+                            isError={productsQuery.isError}
+                            onRetry={() => void productsQuery.refetch()}
+                            hasNextPage={productsQuery.hasNextPage}
+                            isFetchingNextPage={productsQuery.isFetchingNextPage}
+                            onLoadMore={() => void productsQuery.fetchNextPage()}
+                        />
                     )}
                 </ExplorerCard>
             </SimpleGrid>
