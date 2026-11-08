@@ -1,11 +1,12 @@
-import { providerApi } from "@/api/provider.api"
+import { providerApi, type ProviderSortField } from "@/api/provider.api"
 import { toaster } from "@/shared/components/molecules/toast/toaster-instance"
 import Badge from "@/shared/components/atoms/badge"
 import Table from "@/shared/components/organisms/Table"
 import type { Provider } from "@/shared/types/provider.types"
 import type { Column } from "@/shared/types/table.types"
 import { Box, HStack, Text, VStack } from "@chakra-ui/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useServerTable } from "@/shared/hooks/useServerTable"
 import { useNavigate } from "react-router-dom"
 import { useI18n } from "@/shared/i18n/useI18n"
 
@@ -209,15 +210,20 @@ const ProviderList = () => {
     const { t } = useI18n()
     const columns = createProviderColumns(t)
 
-    const { data: providers = [] as Provider[], isLoading, isError } = useQuery({
-        queryKey: ["providers"],
-        queryFn: providerApi.getAll,
+    const table = useServerTable<ProviderSortField>({ pageSize: 10 })
+
+    const providersQuery = useQuery({
+        queryKey: ["providers", "list", table.params],
+        queryFn: () => providerApi.list(table.params),
+        placeholderData: keepPreviousData,
     })
+
+    const providers = providersQuery.data?.data ?? []
 
     const deleteMutation = useMutation({
         mutationFn: (rows: Provider[]) =>
             Promise.all(rows.map(provider => providerApi.delete(provider.id))),
-        onSuccess: (_, rows) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["providers"] })
             toaster.create({
                 title: t("providers.successDelete"),
@@ -266,10 +272,11 @@ const ProviderList = () => {
         <Table
             data={providers}
             columns={columns}
-            isLoading={isLoading}
-            isError={isError}
+            isLoading={providersQuery.isLoading}
+            isError={providersQuery.isError}
+            onRetry={() => void providersQuery.refetch()}
             searchable
-            searchKeys={["name", "email", "company", "phone", "bankName", "NIF", "NIS"]}
+            server={table.tableState(providersQuery.data?.pagination, providersQuery.isFetching)}
             keyExtractor={(provider) => provider.id}
             onEdit={handleEdit}
             actions={actions}

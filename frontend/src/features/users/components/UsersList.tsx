@@ -1,28 +1,35 @@
-import { userApi } from "@/api/user.api"
-import Typography from "@/shared/components/atoms/typography"
+import { userApi, type UserSortField } from "@/api/user.api"
+import FilterSelect from "@/shared/components/molecules/FilterSelect"
 import Table from "@/shared/components/organisms/Table"
 import { RoleBadge } from "@/shared/components/organisms/Table/RoleBadge"
 import { StatusBadge } from "@/shared/components/organisms/Table/StatusBadge"
-import type { User } from "@/shared/types/user.type"
-import { Box, Text } from "@chakra-ui/react"
-import { useEffect, useState } from "react"
+import { useServerTable } from "@/shared/hooks/useServerTable"
+import type { Column } from "@/shared/types/table.types"
+import { Role, type User } from "@/shared/types/user.type"
+import { Box, HStack, Text } from "@chakra-ui/react"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { useI18n } from "@/shared/i18n/useI18n"
 
-
+type UserFilters = { role?: Role; status?: boolean }
 
 const UsersList = () => {
-
-    const [users, setUsers] = useState([])
-    // const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
     const { t } = useI18n()
-     const columns = [
+    const table = useServerTable<UserSortField, UserFilters>({ pageSize: 10 })
+
+    const usersQuery = useQuery({
+        queryKey: ["users", "list", table.params],
+        queryFn: () => userApi.list(table.params),
+        placeholderData: keepPreviousData,
+    })
+
+    const columns: Column<User>[] = [
         {
             key:      "name",
             label:    t("table.name"),
             sortable: true,
-            render:   (value: unknown) => (
+            render:   (value) => (
                 <Box display="flex" alignItems="center" gap={2}>
                     <Box
                         w="7" h="7"
@@ -48,70 +55,62 @@ const UsersList = () => {
             key:      "username",
             label:    t("table.username"),
             sortable: true,
-            render:   (value: unknown) => (
+            render:   (value) => (
                 <Text fontSize="sm" color="neutral.500">
                     @{String(value)}
                 </Text>
             )
         },
         {
-            key:    "role",
-            label:  t("table.role"),
-            render: (value: unknown) => (
-                <RoleBadge value={String(value)} />   // 👈 role badge with icon
-            )
+            key:      "role",
+            label:    t("table.role"),
+            sortable: true,
+            render:   (value) => <RoleBadge value={String(value)} />,
         },
         {
             key:    "status",
             label:  t("table.status"),
-            render: (value: unknown) => (
-                <StatusBadge value={value as boolean} /> // 👈 neutral badge with colored dot
-            )
+            render: (value) => <StatusBadge value={value as boolean} />,
         },
     ]
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const data = await userApi.getAll()
-                setUsers(data)
-                console.log("Fetched users:", data)
-            } catch (error) {
-                console.error("Failed to fetch users:", error)
-            }
-        }
-        fetchUsers()
-    }, [])
 
-    const handleEdit = (user: User) => {
-        console.log("edit", user)
-        navigate(`/users/${user.id}/edit`)
-    }
+    const statusValue = table.filters.status === undefined ? "" : String(table.filters.status)
 
-    const handleDelete = (user: User) => {
-        userApi.delete(user.id)
-        console.log("delete", user)
-    }
     return (
-        <Box>
-            {users.length > 0 ? 
-            (
-                <Box>
-                    <Table
-                        data={users}
-                        columns={columns}
-                        searchable
-                        searchKeys={["name", "role", "username"]}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-
+        <Table
+            data={usersQuery.data?.data ?? []}
+            columns={columns}
+            searchable
+            server={table.tableState(usersQuery.data?.pagination, usersQuery.isFetching)}
+            filters={(
+                <HStack gap={2} flexWrap="wrap">
+                    <FilterSelect
+                        label={t("table.role")}
+                        value={table.filters.role ?? ""}
+                        onChange={value => table.setFilter("role", value ? value as Role : undefined)}
+                        options={[
+                            { value: "", label: t("common.all") },
+                            ...Object.values(Role).map(role => ({ value: role, label: t(`roles.${role}`) })),
+                        ]}
                     />
-                </Box>
-            ) : 
-            (
-                <Typography variant={"body"}>{t("users.noUsers")}</Typography>
+                    <FilterSelect
+                        label={t("table.status")}
+                        value={statusValue}
+                        onChange={value => table.setFilter("status", value === "" ? undefined : value === "true")}
+                        options={[
+                            { value: "", label: t("common.all") },
+                            { value: "true", label: t("common.active") },
+                            { value: "false", label: t("common.inactive") },
+                        ]}
+                    />
+                </HStack>
             )}
-            
-        </Box>
+            isLoading={usersQuery.isLoading}
+            isError={usersQuery.isError}
+            onRetry={() => void usersQuery.refetch()}
+            keyExtractor={user => user.id}
+            onEdit={user => navigate(`/users/${user.id}/edit`)}
+        />
     )
 }
 
