@@ -15,7 +15,7 @@ import dashboardRouter from "./modules/dashboard/dashboard.routes";
 import { requestLogging } from './middlewares/requestLogging.middleware'
 import { errorHandler } from './middlewares/error.middleware'
 import { AppError } from './utils/AppError'
-
+import tenderingRouter from "./modules/tendering/tendering.routes";
 const app = express();
 
 app.use(requestLogging)
@@ -47,6 +47,7 @@ app.use("/api/products", ProductRouter);
 app.use("/api/lots", LotRouter);
 app.use("/api/specifications", SpecificationRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/tendering", tenderingRouter);
 app.get("/", (req: Request, res: Response) => {
   res.send("hello khaoula, API is running...");
 });
