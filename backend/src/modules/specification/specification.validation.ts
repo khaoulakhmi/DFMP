@@ -1,5 +1,4 @@
 import z from "zod";
-import { AVSStatus } from "../../generated/prisma/enums";
 import { intIdParams, intIdParamsSchema, intIdSchema } from "../../utils/id";
 import { amountSchema } from "../../utils/amount";
 import {
@@ -8,22 +7,10 @@ import {
     positiveIntegerQuery,
     sortOrderSchema,
 } from "../../utils/pagination";
+import { tenderingFieldsSchema } from "../tendering/tendering.validation";
 
 const optionalDate = z.union([z.string(), z.date()]).nullable().optional();
 const nullableText = z.string().trim().nullable().optional();
-
-const tenderingSchema = z.object({
-    openingDate: optionalDate,
-    techEvalDate: optionalDate,
-    finEvalDate: optionalDate,
-    attributionDate: optionalDate,
-    delayPeriodDays: z.number().int().positive().optional(),
-    appealDate: optionalDate,
-    appealDepositDate: optionalDate,
-    appealResult: nullableText,
-    programmingDate: optionalDate,
-    avsStatus: z.enum(AVSStatus).nullable().optional(),
-}).optional();
 
 // 1. Base object schema, no refinements
 const specificationBodySchema = z.object({
@@ -43,7 +30,7 @@ const specificationBodySchema = z.object({
     pubArElecJournal: nullableText,
     pubFrElecJournal: nullableText,
     lotIds: z.array(intIdSchema).optional(),
-    tendering: tenderingSchema,
+    tendering: tenderingFieldsSchema.optional(),
 });
 
 // 2. Create schema = base + refinement

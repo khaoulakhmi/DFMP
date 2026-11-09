@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma";
-import type { CreateSpecificationDTO, TenderingDTO, UpdateSpecificationDTO } from "./specification.types";
+import type { CreateSpecificationDTO, UpdateSpecificationDTO } from "./specification.types";
+import type { TenderingFieldsDTO } from "../tendering/tendering.types";
 import {
     invalidReferenceError,
     notFoundError,
@@ -8,27 +9,17 @@ import { runSerializableTransaction } from "../../utils/transaction";
 import type { Prisma } from "../../generated/prisma/client";
 import { pageToSkip, paginate } from "../../utils/pagination";
 import type { SpecificationListQuery } from "./specification.validation";
+import { toTenderingData } from "../tendering/tendering.data";
 
 const toDate = (value?: string | Date | null) => {
     if (!value) return null;
     return value instanceof Date ? value : new Date(value);
 };
 
-const tenderingData = (tendering?: TenderingDTO) => {
-    if (!tendering) return undefined;
+const tenderingData = (tendering?: TenderingFieldsDTO) => {
+    if (tendering === undefined) return undefined;
 
-    return {
-        openingDate: toDate(tendering.openingDate),
-        techEvalDate: toDate(tendering.techEvalDate),
-        finEvalDate: toDate(tendering.finEvalDate),
-        attributionDate: toDate(tendering.attributionDate),
-        delayPeriodDays: tendering.delayPeriodDays ?? 10,
-        appealDate: toDate(tendering.appealDate),
-        appealDepositDate: toDate(tendering.appealDepositDate),
-        appealResult: tendering.appealResult ?? null,
-        programmingDate: toDate(tendering.programmingDate),
-        avsStatus: tendering.avsStatus ?? null,
-    };
+    return toTenderingData(tendering);
 };
 
 const include = {

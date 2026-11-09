@@ -1,17 +1,4 @@
-import { AVSStatus } from "../../generated/prisma/enums";
-
-export type TenderingDTO = {
-    openingDate?: string | Date | null;
-    techEvalDate?: string | Date | null;
-    finEvalDate?: string | Date | null;
-    attributionDate?: string | Date | null;
-    delayPeriodDays?: number;
-    appealDate?: string | Date | null;
-    appealDepositDate?: string | Date | null;
-    appealResult?: string | null;
-    programmingDate?: string | Date | null;
-    avsStatus?: AVSStatus | null;
-}
+import type { TenderingFieldsDTO } from "../tendering/tendering.types";
 
 export type CreateSpecificationDTO = {
     type: string;
@@ -30,7 +17,7 @@ export type CreateSpecificationDTO = {
     pubArElecJournal?: string | null;
     pubFrElecJournal?: string | null;
     lotIds?: number[];
-    tendering?: TenderingDTO;
+    tendering?: TenderingFieldsDTO;
 }
 
 export type UpdateSpecificationDTO = Partial<CreateSpecificationDTO>
