@@ -16,6 +16,7 @@ import { requestLogging } from './middlewares/requestLogging.middleware'
 import { errorHandler } from './middlewares/error.middleware'
 import { AppError } from './utils/AppError'
 import tenderingRouter from "./modules/tendering/tendering.routes";
+import marketRouter from "./modules/market/market.routes";
 const app = express();
 
 app.use(requestLogging)
@@ -48,6 +49,7 @@ app.use("/api/lots", LotRouter);
 app.use("/api/specifications", SpecificationRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/tendering", tenderingRouter);
+app.use("/api/markets", marketRouter);
 app.get("/", (req: Request, res: Response) => {
   res.send("hello khaoula, API is running...");
 });
